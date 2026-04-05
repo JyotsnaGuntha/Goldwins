@@ -2,15 +2,94 @@
 PDF Report Generation Utilities
 """
 import io
-from typing import List, BinaryIO
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image, PageBreak, Preformatted
+from typing import List, BinaryIO, Tuple
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image, PageBreak, Preformatted, Flowable
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.pagesizes import A4
+from reportlab.lib.pagesizes import A4, landscape, portrait
 from reportlab.lib import colors
 from reportlab.lib.units import mm, inch
 from models.system_model import DesignObject
 from renderers.bom_generator import BOMGenerator
 from config.constants import PDF_MARGIN, PDF_TITLE_FONTSIZE, PDF_SECTION_FONTSIZE, PDF_NORMAL_FONTSIZE
+
+
+class SVGDiagramScaler:
+    """Intelligent SVG to PDF diagram scaling"""
+    
+    # Standard A4 paper in inches (portrait)
+    A4_WIDTH = 8.27
+    A4_HEIGHT = 11.69
+    PTS_PER_INCH = 72.0
+    
+    @staticmethod
+    def scale_svg_for_pdf(svg_string: str, diagram_name: str = "Diagram", max_margin: float = 0.5) -> Tuple[Flowable, str]:
+        """
+        Convert SVG to reportlab drawing with optimal scaling
+        Fits entire diagram on single A4 page without cropping
+        
+        Args:
+            svg_string: SVG content as string
+            diagram_name: Name of diagram (for logging)
+            max_margin: Margin in inches on each side
+        
+        Returns:
+            Tuple of (Flowable drawing, orientation)
+        """
+        try:
+            from svglib.svglib import svg2rlg
+            import tempfile
+            import os
+            
+            # Create temporary SVG file with UTF-8 encoding
+            temp_svg = tempfile.NamedTemporaryFile(mode='w', suffix='.svg', delete=False, encoding='utf-8')
+            temp_svg.write(svg_string)
+            temp_svg.close()
+            
+            try:
+                # Convert SVG to reportlab drawing
+                drawing = svg2rlg(temp_svg.name)
+                if not drawing:
+                    return None, "portrait"
+                
+                # Get SVG dimensions (svg2rlg returns in points/reportlab units)
+                svg_width_pts = float(drawing.width) if drawing.width else 1087.5
+                svg_height_pts = float(drawing.height) if drawing.height else 637.5
+                
+                # Convert to inches
+                svg_width_in = svg_width_pts / SVGDiagramScaler.PTS_PER_INCH
+                svg_height_in = svg_height_pts / SVGDiagramScaler.PTS_PER_INCH
+                
+                # Available space on A4-portrait with margins and heading space
+                margin_total = 2 * max_margin  # Inches (top + bottom or left + right)
+                heading_space = 0.8  # Space for title and description
+                
+                available_width = SVGDiagramScaler.A4_WIDTH - margin_total
+                available_height = SVGDiagramScaler.A4_HEIGHT - margin_total - heading_space
+                
+                # Calculate scale factor to fit (use minimum to preserve aspect ratio)
+                scale_w = available_width / svg_width_in
+                scale_h = available_height / svg_height_in
+                scale_factor = min(scale_w, scale_h)
+                
+                # Apply scaling
+                final_width_in = svg_width_in * scale_factor
+                final_height_in = svg_height_in * scale_factor
+                
+                # Set drawing dimensions in points
+                drawing.width = final_width_in * SVGDiagramScaler.PTS_PER_INCH
+                drawing.height = final_height_in * SVGDiagramScaler.PTS_PER_INCH
+                
+                return drawing, "portrait"
+                
+            finally:
+                if os.path.exists(temp_svg.name):
+                    os.remove(temp_svg.name)
+                    
+        except Exception as e:
+            print(f"SVG scaling failed for {diagram_name}: {e}")
+            import traceback
+            traceback.print_exc()
+            return None, "portrait"
 
 
 class PDFReportGenerator:
@@ -37,6 +116,8 @@ class PDFReportGenerator:
     ) -> io.BytesIO:
         """
         Generate complete PDF report with all sections
+        Full SLD and GA diagrams are embedded with intelligent scaling
+        All diagrams sized to fit within standard A4 portrait pages without cropping
         
         Args:
             sld_svg_string: SVG string of SLD
@@ -50,7 +131,11 @@ class PDFReportGenerator:
         """
         buffer = io.BytesIO()
         
-        # Create PDF document
+        # Scale SVG diagrams with optimal sizing for A4-portrait pages
+        sld_drawing, _ = SVGDiagramScaler.scale_svg_for_pdf(sld_svg_string, "SLD")
+        ga_drawing, _ = SVGDiagramScaler.scale_svg_for_pdf(ga_svg_string, "GA")
+        
+        # Create PDF document with portrait orientation
         doc = SimpleDocTemplate(
             buffer,
             pagesize=A4,
@@ -67,24 +152,22 @@ class PDFReportGenerator:
         story.extend(self._build_title_page(project_name))
         story.append(PageBreak())
         
-        # Page 2: SLD
-        sld_content = self._build_sld_from_svg(sld_svg_string)
-        if sld_content:
-            story.extend(sld_content)
+        # Page 2: SLD (full diagram scaled intelligently)
+        if sld_drawing:
+            story.extend(self._build_sld_page_optimized(sld_drawing))
         elif sld_png_path:
             story.extend(self._build_sld_page(sld_png_path))
         else:
-            story.append(Paragraph("Single Line Diagram (SVG)", self._get_styles()['Heading2']))
+            story.append(Paragraph("Single Line Diagram (SLD)", self._get_styles()['Heading2']))
         story.append(PageBreak())
         
-        # Page 3: GA
-        ga_content = self._build_ga_from_svg(ga_svg_string)
-        if ga_content:
-            story.extend(ga_content)
+        # Page 3: GA (full diagram scaled intelligently)
+        if ga_drawing:
+            story.extend(self._build_ga_page_optimized(ga_drawing))
         elif ga_png_path:
             story.extend(self._build_ga_page(ga_png_path))
         else:
-            story.append(Paragraph("General Arrangement (SVG)", self._get_styles()['Heading2']))
+            story.append(Paragraph("General Arrangement (GA)", self._get_styles()['Heading2']))
         story.append(PageBreak())
         
         # Page 4: BOM
@@ -94,6 +177,57 @@ class PDFReportGenerator:
         doc.build(story)
         buffer.seek(0)
         return buffer
+   
+    
+    def _build_sld_page_optimized(self, drawing) -> List:
+        """
+        Build SLD page with optimized scaled drawing (full diagram, no cropping)
+        
+        Args:
+            drawing: reportlab Drawing object (already scaled optimally)
+        
+        Returns:
+            List of reportlab elements
+        """
+        styles = self._get_styles()
+        story = [
+            Paragraph("Single Line Diagram (SLD)", styles['Heading2']),
+            Spacer(1, 0.15*inch),
+            drawing,
+            Spacer(1, 0.15*inch),
+            Paragraph(
+                "The Single Line Diagram represents the complete electrical architecture of the microgrid system, "
+                "including all generation sources (Grid, Solar, DG), the main busbar, and load feeders with protection devices. "
+                "The diagram is scaled to fit the page while maintaining full detail and aspect ratio.",
+                styles['Normal']
+            )
+        ]
+        return story
+    
+    def _build_ga_page_optimized(self, drawing) -> List:
+        """
+        Build GA page with optimized scaled drawing (full diagram, no cropping)
+        
+        Args:
+            drawing: reportlab Drawing object (already scaled optimally)
+        
+        Returns:
+            List of reportlab elements
+        """
+        styles = self._get_styles()
+        story = [
+            Paragraph("General Arrangement (GA)", styles['Heading2']),
+            Spacer(1, 0.15*inch),
+            drawing,
+            Spacer(1, 0.15*inch),
+            Paragraph(
+                "The General Arrangement diagram displays the physical layout and positioning of all electrical components "
+                "in the microgrid panel, including MCCBs, busbars, connections, and control devices. "
+                "The diagram is scaled to fit the page while maintaining full detail and aspect ratio.",
+                styles['Normal']
+            )
+        ]
+        return story
     
     def _build_sld_from_svg(self, svg_string: str) -> List:
         """
