@@ -39,10 +39,10 @@ class PDFReportGenerator:
         Generate complete PDF report with all sections
         
         Args:
-            sld_svg_string: SVG string of SLD (can be passed for conversion)
-            ga_svg_string: SVG string of GA (can be passed for conversion)
-            sld_png_path: Optional path to pre-converted SLD PNG
-            ga_png_path: Optional path to pre-converted GA PNG
+            sld_svg_string: SVG string of SLD
+            ga_svg_string: SVG string of GA
+            sld_png_path: Optional path to pre-converted SLD PNG (fallback)
+            ga_png_path: Optional path to pre-converted GA PNG (fallback)
             project_name: Title of the project
         
         Returns:
@@ -68,17 +68,23 @@ class PDFReportGenerator:
         story.append(PageBreak())
         
         # Page 2: SLD
-        if sld_png_path:
+        sld_content = self._build_sld_from_svg(sld_svg_string)
+        if sld_content:
+            story.extend(sld_content)
+        elif sld_png_path:
             story.extend(self._build_sld_page(sld_png_path))
         else:
-            story.append(Paragraph("SLD (Requires PNG conversion of SVG)", self._get_styles()['Heading2']))
+            story.append(Paragraph("Single Line Diagram (SVG)", self._get_styles()['Heading2']))
         story.append(PageBreak())
         
         # Page 3: GA
-        if ga_png_path:
+        ga_content = self._build_ga_from_svg(ga_svg_string)
+        if ga_content:
+            story.extend(ga_content)
+        elif ga_png_path:
             story.extend(self._build_ga_page(ga_png_path))
         else:
-            story.append(Paragraph("GA (Requires PNG conversion of SVG)", self._get_styles()['Heading2']))
+            story.append(Paragraph("General Arrangement (SVG)", self._get_styles()['Heading2']))
         story.append(PageBreak())
         
         # Page 4: BOM
@@ -88,6 +94,94 @@ class PDFReportGenerator:
         doc.build(story)
         buffer.seek(0)
         return buffer
+    
+    def _build_sld_from_svg(self, svg_string: str) -> List:
+        """
+        Build SLD page content from SVG string
+        
+        Args:
+            svg_string: SVG content as string
+        
+        Returns:
+            List of reportlab elements
+        """
+        try:
+            from svglib.svglib import svg2rlg
+            import tempfile
+            import os
+            
+            # Create temporary SVG file with proper UTF-8 encoding
+            temp_svg = tempfile.NamedTemporaryFile(mode='w', suffix='.svg', delete=False, encoding='utf-8')
+            temp_svg.write(svg_string)
+            temp_svg.close()
+            
+            try:
+                # Convert SVG to drawing
+                drawing = svg2rlg(temp_svg.name)
+                if drawing:
+                    drawing.width = 6.5*inch
+                    drawing.height = 4*inch
+                    
+                    styles = self._get_styles()
+                    story = [
+                        Paragraph("Single Line Diagram (SLD)", styles['Heading2']),
+                        Spacer(1, 0.3*inch),
+                        drawing,
+                        Spacer(1, 0.2*inch),
+                        Paragraph("This diagram shows the complete electrical layout of your microgrid system.", styles['Normal'])
+                    ]
+                    return story
+            finally:
+                if os.path.exists(temp_svg.name):
+                    os.remove(temp_svg.name)
+        except Exception as e:
+            print(f"SVG to PDF conversion for SLD failed: {e}")
+        
+        return None
+    
+    def _build_ga_from_svg(self, svg_string: str) -> List:
+        """
+        Build GA page content from SVG string
+        
+        Args:
+            svg_string: SVG content as string
+        
+        Returns:
+            List of reportlab elements
+        """
+        try:
+            from svglib.svglib import svg2rlg
+            import tempfile
+            import os
+            
+            # Create temporary SVG file with proper UTF-8 encoding
+            temp_svg = tempfile.NamedTemporaryFile(mode='w', suffix='.svg', delete=False, encoding='utf-8')
+            temp_svg.write(svg_string)
+            temp_svg.close()
+            
+            try:
+                # Convert SVG to drawing
+                drawing = svg2rlg(temp_svg.name)
+                if drawing:
+                    drawing.width = 5.5*inch
+                    drawing.height = 7*inch
+                    
+                    styles = self._get_styles()
+                    story = [
+                        Paragraph("General Arrangement (GA)", styles['Heading2']),
+                        Spacer(1, 0.3*inch),
+                        drawing,
+                        Spacer(1, 0.2*inch),
+                        Paragraph("This diagram shows the physical layout and positioning of all components.", styles['Normal'])
+                    ]
+                    return story
+            finally:
+                if os.path.exists(temp_svg.name):
+                    os.remove(temp_svg.name)
+        except Exception as e:
+            print(f"SVG to PDF conversion for GA failed: {e}")
+        
+        return None
     
     def _build_title_page(self, project_name: str) -> List:
         """Build title page content"""

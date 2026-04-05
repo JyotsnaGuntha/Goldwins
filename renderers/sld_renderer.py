@@ -76,16 +76,7 @@ class SLDRenderer:
             stroke_dasharray="8,4"
         ))
         
-        # Scope labels
-        self.dwg.add(self.dwg.text(
-            "CUSTOMER SCOPE",
-            insert=(SVG_WIDTH / 2, Y_DIVISION - 30),
-            font_size=16,
-            font_weight="bold",
-            fill="#94a3b8",
-            text_anchor="middle"
-        ))
-        
+        # Scope label
         self.dwg.add(self.dwg.text(
             "KIRLOSKAR SMART AMF PANEL SCOPE",
             insert=(50, SVG_HEIGHT - 50),
