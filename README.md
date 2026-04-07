@@ -1,4 +1,4 @@
-# Goldwins - Professional Microgrid SLD Generator
+# Goldwins - Microgrid Panel Generator
 
 A powerful Streamlit-based web application for generating professional Single Line Diagrams (SLDs) for microgrids. Create, visualize, and export detailed electrical system diagrams with an intuitive interface and modern design.
 
