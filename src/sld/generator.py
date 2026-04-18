@@ -1,0 +1,224 @@
+"""
+SLD Generator
+Main SLD (Single Line Diagram) generation logic.
+"""
+
+import svgwrite as svg
+from .components import draw_mccb, draw_tower, draw_solar, draw_mgc
+from ..constants import SLD_MIN_WIDTH, SLD_HEIGHT, SLD_MIN_COL_SPACING, SLD_MARGIN_LEFT, SLD_MARGIN_RIGHT
+
+
+def compute_canvas(n_dg, g_kw, s_kw, n_out):
+    """
+    Compute SLD canvas dimensions based on number of sources and outputs.
+    
+    Args:
+        n_dg: Number of DGs
+        g_kw: Grid capacity (kW)
+        s_kw: Solar capacity (kW)
+        n_out: Number of outgoing feeders
+    
+    Returns:
+        (width, height, inc_spacing, out_spacing, x_init)
+    """
+    n_incomers = int(n_dg) + (1 if g_kw > 0 else 0) + (1 if s_kw > 0 else 0)
+    n_incomers = max(n_incomers, 1)
+    n_out = max(int(n_out), 1)
+    
+    width = SLD_MARGIN_LEFT + max(n_incomers, n_out + 0.5) * SLD_MIN_COL_SPACING + SLD_MARGIN_RIGHT
+    width = max(width, SLD_MIN_WIDTH)
+    
+    return int(width), SLD_HEIGHT, SLD_MIN_COL_SPACING, SLD_MIN_COL_SPACING, int(SLD_MARGIN_LEFT + 60)
+
+
+def generate_sld(
+    system_calcs,
+    num_outputs,
+    mccb_outputs,
+    num_poles,
+    num_dg,
+    grid_kw,
+    solar_kw,
+    total_busbar_current,
+    theme_svg_bg="#020617",
+    theme_text="#e2e8f0",
+    theme_svg_stroke="#334155",
+    theme_sub="#94a3b8",
+):
+    """
+    Generate complete SLD diagram as SVG string.
+    
+    Args:
+        system_calcs: SystemCalculations instance with all electrical data
+        num_outputs: Number of outgoing feeders
+        mccb_outputs: List of outgoing MCCB ratings
+        num_poles: 3 or 4 (system phases)
+        num_dg: Number of DGs
+        grid_kw: Grid rating (kW)
+        solar_kw: Solar rating (kW)
+        total_busbar_current: Total busbar current (A)
+        theme_svg_bg: Background color
+        theme_text: Text color
+        theme_svg_stroke: Line stroke color
+        theme_sub: Subtitle color
+    
+    Returns:
+        (svg_string, canvas_width, canvas_height)
+    """
+    width, height, inc_spacing, out_spacing, x_init = compute_canvas(num_dg, grid_kw, solar_kw, num_outputs)
+    
+    dwg = svg.Drawing(size=(width, height), profile="full")
+    dwg.viewbox(0, 0, width, height)
+    dwg.add(dwg.rect((0, 0), (width, height), fill=theme_svg_bg, 
+                     stroke=theme_svg_stroke, stroke_width=2, rx=15))
+    
+    y_division = int(height * 0.40)
+    y_sources = int(height * 0.17)
+    y_busbar = int(height * 0.58)
+    
+    # Division line between customer scope and supplier scope
+    dwg.add(dwg.line((30, y_division), (width - 30, y_division), 
+                     stroke="#475569", stroke_width=1, stroke_dasharray="8,4"))
+    dwg.add(dwg.text("Customer Scope", insert=(width / 2, 50), 
+                     font_size=20, font_weight="bold", fill="#94a3b8", text_anchor="middle"))
+    dwg.add(dwg.text("Kirloskar Scope", insert=(50, height - 40), 
+                     font_size=20, font_weight="bold", fill="#94a3b8"))
+    dwg.add(dwg.text("Smart AMF Panel", insert=(width - 220, height - 40), 
+                     font_size=18, fill="#6366f1"))
+    
+    # MGC (Microgrid Controller)
+    mgc_x = width - 155
+    mgc_y = y_division - 18
+    draw_mgc(dwg, mgc_x, mgc_y)
+    dwg.add(dwg.text("Auto / Manual", insert=(mgc_x + 50, mgc_y - 15), 
+                     font_size=13, fill="#cbd5e1", text_anchor="middle"))
+    
+    # ────────────────────────────────────────────────────────────────────────────────
+    # Draw DG incomers
+    # ────────────────────────────────────────────────────────────────────────────────
+    current_x = x_init
+    active_ics_x = []
+    ic_index = 1
+    
+    for i in range(int(num_dg)):
+        cx = current_x
+        dwg.add(dwg.text(f"{system_calcs.dg_ratings_kva[i]} kVA", insert=(cx, y_sources - 85), 
+                         font_size=16, font_weight="bold", fill=theme_text, text_anchor="middle"))
+        dwg.add(dwg.circle(center=(cx, y_sources), r=45, stroke="#60a5fa", 
+                          fill="none", stroke_width=2.5))
+        dwg.add(dwg.text(f"DG {i + 1}", insert=(cx, y_sources + 7), 
+                         font_size=15, fill=theme_text, text_anchor="middle"))
+        dwg.add(dwg.line((cx, y_sources + 45), (cx, y_division + 50), 
+                         stroke=theme_text, stroke_width=2))
+        draw_mccb(dwg, cx, y_division + 100, system_calcs.dg_mccbs[i], num_poles, 
+                 f"I/C {ic_index}", theme_text, theme_sub, "left")
+        dwg.add(dwg.line((cx, y_division + 150), (cx, y_busbar), 
+                         stroke=theme_text, stroke_width=2))
+        active_ics_x.append(cx)
+        current_x += inc_spacing
+        ic_index += 1
+    
+    # ────────────────────────────────────────────────────────────────────────────────
+    # Draw grid incomer
+    # ────────────────────────────────────────────────────────────────────────────────
+    if grid_kw > 0:
+        cx = current_x
+        dwg.add(dwg.text(f"{grid_kw} kW", insert=(cx, y_sources - 85), 
+                         font_size=16, font_weight="bold", fill=theme_text, text_anchor="middle"))
+        draw_tower(dwg, cx, y_sources - 30, theme_text)
+        dwg.add(dwg.line((cx, y_sources + 30), (cx, y_division + 50), 
+                         stroke=theme_text, stroke_width=2))
+        draw_mccb(dwg, cx, y_division + 100, system_calcs.mccb_grid, num_poles, 
+                 f"I/C {ic_index}", theme_text, theme_sub, "left")
+        dwg.add(dwg.line((cx, y_division + 150), (cx, y_busbar), 
+                         stroke=theme_text, stroke_width=2))
+        active_ics_x.append(cx)
+        current_x += inc_spacing
+        ic_index += 1
+    
+    # ────────────────────────────────────────────────────────────────────────────────
+    # Draw solar incomer
+    # ────────────────────────────────────────────────────────────────────────────────
+    if solar_kw > 0:
+        cx = current_x
+        dwg.add(dwg.text(f"{solar_kw} kWp", insert=(cx, y_sources - 85), 
+                         font_size=16, font_weight="bold", fill=theme_text, text_anchor="middle"))
+        draw_solar(dwg, cx, y_sources - 30, theme_text)
+        dwg.add(dwg.line((cx, y_sources + 25), (cx, y_division + 50), 
+                         stroke=theme_text, stroke_width=2))
+        draw_mccb(dwg, cx, y_division + 100, system_calcs.mccb_solar, num_poles, 
+                 f"I/C {ic_index}", theme_text, theme_sub, "left")
+        dwg.add(dwg.line((cx, y_division + 150), (cx, y_busbar), 
+                         stroke=theme_text, stroke_width=2))
+        active_ics_x.append(cx)
+    
+    # ────────────────────────────────────────────────────────────────────────────────
+    # Draw busbar
+    # ────────────────────────────────────────────────────────────────────────────────
+    dwg.add(dwg.line((40, y_busbar), (width - 40, y_busbar), 
+                     stroke="#ef4444", stroke_width=7))
+    hash_start_x = 60
+    for p in range(int(num_poles)):
+        dwg.add(dwg.line((hash_start_x + p * 7, y_busbar + 12), (hash_start_x + p * 7 + 8, y_busbar - 12), 
+                         stroke=theme_text, stroke_width=1.5))
+    dwg.add(dwg.text(f"{total_busbar_current:.1f}A", insert=(width - 50, y_busbar - 12), 
+                     font_size=13, fill="#f87171", text_anchor="end"))
+    
+    # ────────────────────────────────────────────────────────────────────────────────
+    # Draw control/communication lines
+    # ────────────────────────────────────────────────────────────────────────────────
+    if active_ics_x:
+        comm_y = y_division + 25
+        dwg.add(dwg.line((active_ics_x[0], comm_y), (mgc_x - 12, comm_y), 
+                         stroke="#a78bfa", stroke_width=1.2, stroke_dasharray="6,3"))
+        for ax in active_ics_x:
+            dwg.add(dwg.line((ax, comm_y), (ax, y_division + 50), 
+                             stroke="#a78bfa", stroke_width=1, stroke_dasharray="4,2"))
+        
+        x_out_start = x_init + (inc_spacing / 2)
+        mgc_pin_x = mgc_x + (3 * (100 / 7))
+        comm_y_bottom = y_busbar + 160
+        dwg.add(dwg.line((x_out_start, comm_y_bottom), (mgc_pin_x, comm_y_bottom), 
+                         stroke="#a78bfa", stroke_width=1.2, stroke_dasharray="6,3"))
+        dwg.add(dwg.line((mgc_pin_x, mgc_y + 112), (mgc_pin_x, comm_y_bottom), 
+                         stroke="#a78bfa", stroke_width=1.2, stroke_dasharray="6,3"))
+        for i in range(int(num_outputs)):
+            ox = x_out_start + i * inc_spacing
+            if ox > (mgc_x - 50):
+                break
+            dwg.add(dwg.line((ox, comm_y_bottom), (ox, y_busbar + 125), 
+                             stroke="#a78bfa", stroke_width=1, stroke_dasharray="4,2"))
+    
+    # ────────────────────────────────────────────────────────────────────────────────
+    # Draw outgoing feeders
+    # ────────────────────────────────────────────────────────────────────────────────
+    x_out_start = x_init + (inc_spacing / 2)
+    for i in range(int(num_outputs)):
+        ox = x_out_start + i * inc_spacing
+        if ox > (mgc_x - 50):
+            break
+        rating = mccb_outputs[i] if i < len(mccb_outputs) else 250
+        dwg.add(dwg.line((ox, y_busbar), (ox, y_busbar + 25), 
+                         stroke=theme_text, stroke_width=2))
+        draw_mccb(dwg, ox, y_busbar + 75, rating, num_poles, f"O/G {i + 1}", 
+                 theme_text, theme_sub, "right")
+        dwg.add(dwg.line((ox, y_busbar + 125), (ox, height - 80), 
+                         stroke=theme_text, stroke_width=2))
+    
+    # ────────────────────────────────────────────────────────────────────────────────
+    # Add communication labels
+    # ────────────────────────────────────────────────────────────────────────────────
+    if active_ics_x:
+        comm_y = y_division + 25
+        comm_y_bottom = y_busbar + 160
+        label_text = "Communication and Control Lines"
+        dwg.add(dwg.rect(insert=(width / 2 - 120, comm_y - 12), size=(240, 24), 
+                         fill=theme_svg_bg, stroke="none"))
+        dwg.add(dwg.text(label_text, insert=(width / 2, comm_y + 6), 
+                         font_size=13, fill="#c4b5fd", text_anchor="middle"))
+        dwg.add(dwg.rect(insert=(width / 2 - 120, comm_y_bottom - 12), size=(240, 24), 
+                         fill=theme_svg_bg, stroke="none"))
+        dwg.add(dwg.text(label_text, insert=(width / 2, comm_y_bottom + 6), 
+                         font_size=13, fill="#c4b5fd", text_anchor="middle"))
+    
+    return dwg.tostring(), width, height

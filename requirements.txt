@@ -1,0 +1,7 @@
+streamlit==1.56.0
+pandas==3.0.2
+svgwrite==1.4.3
+openpyxl>=3.0.0
+reportlab>=4.0.0
+svglib>=1.4.0
+Pillow>=10.0.0
