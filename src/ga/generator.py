@@ -417,8 +417,6 @@ def generate_ga_svg(
 
         for i, (key, val) in enumerate(specs):
             ry = SB_Y + hdr_h + i * row_h
-            if i % 2 == 1:
-                dwg.add(dwg.rect(insert=(SB_X + 1, ry), size=(SB_W - 2, row_h), fill="#0b2035"))
             dwg.add(dwg.line((SB_X, ry), (SB_X + SB_W, ry), stroke="#1e3a5f", stroke_width=0.4))
             dwg.add(dwg.line((DIV_X, ry), (DIV_X, ry + row_h), stroke="#1e3a5f", stroke_width=0.4))
             ty = ry + row_h / 2 + 3.5
