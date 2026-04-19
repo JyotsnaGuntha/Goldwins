@@ -100,8 +100,16 @@ function setLoading(isLoading) {
 function setStatus(message, kind = "ok") {
   const statusCard = $("statusCard");
   const statusText = $("statusText");
+  if (kind !== "warn") {
+    statusCard.classList.add("hidden");
+    statusCard.classList.remove("ok", "warn");
+    statusText.textContent = "";
+    return;
+  }
+
+  statusCard.classList.remove("hidden");
   statusCard.classList.remove("ok", "warn");
-  statusCard.classList.add(kind === "warn" ? "warn" : "ok");
+  statusCard.classList.add("warn");
   statusText.textContent = message;
 }
 
@@ -132,12 +140,14 @@ function renderFromDesign(design) {
   $("gaImage").src = svgToDataUri(design.ga.svg);
 
   const warning = design.summary.warning_flag;
-  setStatus(
-    warning
-      ? `Warning: total busbar current ${design.summary.total_busbar_current.toFixed(2)} A exceeds outgoing capacity ${design.summary.total_outgoing_rating.toFixed(0)} A.`
-      : `System is properly sized. Total busbar current ${design.summary.total_busbar_current.toFixed(2)} A.`,
-    warning ? "warn" : "ok",
-  );
+  if (warning) {
+    setStatus(
+      `Total busbar current ${design.summary.total_busbar_current.toFixed(2)} A exceeds outgoing capacity ${design.summary.total_outgoing_rating.toFixed(0)} A.`,
+      "warn",
+    );
+  } else {
+    setStatus("", "ok");
+  }
 }
 
 async function generateDesign() {
@@ -178,7 +188,6 @@ async function exportFile(methodName, suggestedName) {
     if (!response || response.ok === false) {
       throw new Error(response?.error || "Export failed");
     }
-    setStatus(`Saved ${response.filename || suggestedName}${response.path ? ` to ${response.path}` : ""}.`, "ok");
   } catch (error) {
     setStatus(error.message, "warn");
   } finally {

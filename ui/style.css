@@ -133,6 +133,11 @@ h1 {
   line-height: 1;
 }
 
+.control-generate-button {
+  width: 100%;
+  margin-top: 2px;
+}
+
 .workspace {
   min-height: 0;
   display: grid;
@@ -240,7 +245,7 @@ h1 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.2rem 0.62rem;
+  padding: 0.2rem 0.42rem;
   border-radius: 999px;
   background: rgba(31, 169, 161, 0.15);
   color: var(--accent-2);
@@ -347,6 +352,10 @@ select:focus {
 
 .status-card.ok {
   border-color: rgba(31, 169, 161, 0.28);
+}
+
+.status-card.hidden {
+  display: none;
 }
 
 .diagrams-grid {

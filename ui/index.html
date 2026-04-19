@@ -60,6 +60,7 @@
                     <option value="4" selected>4</option>
                   </select>
                 </label>
+                <button class="primary-button control-generate-button" id="generateButtonOutput" type="button">Generate</button>
               </div>
             </article>
 
@@ -91,7 +92,6 @@
             <p>Live previews and compact engineering summaries.</p>
           </div>
           <div class="header-actions">
-            <button class="primary-button" id="generateButtonOutput" type="button">Generate</button>
             <button class="icon-button" id="downloadPdfButton" type="button">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -120,13 +120,6 @@
         </div>
 
         <div class="output-stack">
-          <div class="summary-grid" id="summaryGrid"></div>
-
-          <div class="status-card" id="statusCard">
-            <strong>Status</strong>
-            <p id="statusText">Ready to generate.</p>
-          </div>
-
           <div class="diagrams-grid">
             <article class="card diagram-card">
               <div class="card-title-row">
@@ -144,6 +137,13 @@
               <div class="diagram-frame"><img id="gaImage" alt="GA preview" /></div>
             </article>
           </div>
+
+          <div class="status-card hidden" id="statusCard">
+            <strong>Warnings</strong>
+            <p id="statusText"></p>
+          </div>
+
+          <div class="summary-grid" id="summaryGrid"></div>
 
         </div>
       </section>
