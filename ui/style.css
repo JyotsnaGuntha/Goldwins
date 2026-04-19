@@ -297,6 +297,16 @@ body[data-theme="light"] select {
   background: #ffffff;
 }
 
+select option {
+  background: #132238;
+  color: #e7eef9;
+}
+
+body[data-theme="light"] select option {
+  background: #ffffff;
+  color: #10203a;
+}
+
 input:focus,
 select:focus {
   border-color: rgba(31, 169, 161, 0.7);
