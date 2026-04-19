@@ -1,10 +1,9 @@
-import os
-import webbrowser
-import time
+"""
+Compatibility launcher for the desktop application.
+"""
 
-# Start streamlit
-os.system("streamlit run app.py")
+from main import main
 
-# Open browser after slight delay
-time.sleep(3)
-webbrowser.open("http://localhost:8501")
+
+if __name__ == "__main__":
+    main()

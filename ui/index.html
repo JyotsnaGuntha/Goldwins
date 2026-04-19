@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Microgrid Panel Designer</title>
+  <link rel="stylesheet" href="style.css" />
+  <script defer src="app.js"></script>
+</head>
+<body data-theme="dark">
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Desktop electrical design workspace</p>
+        <h1>Microgrid Panel Designer</h1>
+        <p class="subtitle">Single-screen SLD, GA, and BOM control center.</p>
+      </div>
+      <div class="topbar-actions">
+        <button class="ghost-button" id="themeToggle" type="button">Toggle theme</button>
+        <button class="primary-button" id="generateButton" type="button">Generate design</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="panel controls-panel">
+        <div class="panel-header">
+          <h2>Design Inputs</h2>
+          <p>Set capacities and hardware selections.</p>
+        </div>
+
+        <div class="control-stack">
+          <div class="control-layout">
+            <article class="card form-card control-main">
+              <div class="grid one-col">
+                <label>
+                  <span>Solar (kWp)</span>
+                  <input id="solarKw" type="number" min="0" step="1" value="100" />
+                </label>
+                <label>
+                  <span>Grid (kW)</span>
+                  <input id="gridKw" type="number" min="0" step="1" value="120" />
+                </label>
+                <label>
+                  <span>Number of DGs</span>
+                  <input id="numDg" type="number" min="0" max="4" step="1" value="2" />
+                </label>
+                <label>
+                  <span>Outgoing Feeders</span>
+                  <input id="numOutputs" type="number" min="1" max="10" step="1" value="3" />
+                </label>
+                <label>
+                  <span>Busbar Material</span>
+                  <select id="busbarMaterial">
+                    <option value="Copper">Copper</option>
+                    <option value="Aluminium" selected>Aluminium</option>
+                  </select>
+                </label>
+                <label>
+                  <span>System Phases / Poles</span>
+                  <select id="numPoles">
+                    <option value="3">3</option>
+                    <option value="4" selected>4</option>
+                  </select>
+                </label>
+              </div>
+            </article>
+
+            <section class="control-side">
+              <article class="card sub-card">
+                <div class="card-title-row">
+                  <h3>DG Ratings</h3>
+                  <span class="chip subtle">kVA</span>
+                </div>
+                <div id="dgInputs" class="stacked-inputs"></div>
+              </article>
+
+              <article class="card sub-card">
+                <div class="card-title-row">
+                  <h3>Outgoing Feeder Ratings</h3>
+                  <span class="chip subtle">A</span>
+                </div>
+                <div id="outgoingInputs" class="stacked-inputs"></div>
+              </article>
+            </section>
+          </div>
+
+          <article class="card action-card">
+            <p class="card-note">Generate outputs and export files.</p>
+            <div class="button-row">
+              <button class="primary-button" id="generateButtonAlt" type="button">Generate</button>
+              <button class="ghost-button" id="downloadPdfButton" type="button">Download report PDF</button>
+              <button class="ghost-button" id="downloadGaButton" type="button">Download GA PDF</button>
+              <button class="ghost-button" id="downloadExcelButton" type="button">Download BOM Excel</button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel output-panel">
+        <div class="panel-header">
+          <h2>Generated Output</h2>
+          <p>Live previews and compact engineering summaries.</p>
+        </div>
+
+        <div class="output-stack">
+          <div class="summary-grid" id="summaryGrid"></div>
+
+          <div class="status-card" id="statusCard">
+            <strong>Status</strong>
+            <p id="statusText">Ready to generate.</p>
+          </div>
+
+          <div class="diagrams-grid">
+            <article class="card diagram-card">
+              <div class="card-title-row">
+                <h3>Single Line Diagram</h3>
+                <span class="chip subtle">SVG</span>
+              </div>
+              <div class="diagram-frame"><img id="sldImage" alt="SLD preview" /></div>
+            </article>
+
+            <article class="card diagram-card">
+              <div class="card-title-row">
+                <h3>General Arrangement</h3>
+                <span class="chip subtle">SVG</span>
+              </div>
+              <div class="diagram-frame"><img id="gaImage" alt="GA preview" /></div>
+            </article>
+          </div>
+
+          <div class="lists-grid">
+            <article class="card list-card">
+              <div class="card-title-row">
+                <h3>MCCB Schedule</h3>
+                <span class="chip subtle" id="scheduleCount">0 items</span>
+              </div>
+              <ul class="compact-list" id="scheduleTable"></ul>
+            </article>
+
+            <article class="card list-card">
+              <div class="card-title-row">
+                <h3>BOM Snapshot</h3>
+                <span class="chip subtle" id="bomCount">0 items</span>
+              </div>
+              <ul class="compact-list" id="bomTable"></ul>
+            </article>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
