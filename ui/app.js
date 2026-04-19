@@ -15,6 +15,7 @@ const state = {
   lastDesign: null,
 };
 
+
 const elements = {};
 
 function $(id) {
@@ -41,6 +42,50 @@ function svgToDataUri(svg) {
 function numberValue(id, fallback = 0) {
   const value = Number($(id).value);
   return Number.isFinite(value) ? value : fallback;
+}
+
+function enhanceNumberSteppers(scope = document) {
+  const numericInputs = scope.querySelectorAll('input[type="number"]:not([data-stepperized="true"])');
+
+  numericInputs.forEach((input) => {
+    const wrapper = document.createElement("div");
+    wrapper.className = "number-stepper";
+
+    const controls = document.createElement("div");
+    controls.className = "stepper-controls";
+
+    const incrementButton = document.createElement("button");
+    incrementButton.type = "button";
+    incrementButton.className = "stepper-btn";
+    incrementButton.textContent = "+";
+    incrementButton.setAttribute("aria-label", "Increase value");
+
+    const decrementButton = document.createElement("button");
+    decrementButton.type = "button";
+    decrementButton.className = "stepper-btn";
+    decrementButton.textContent = "-";
+    decrementButton.setAttribute("aria-label", "Decrease value");
+
+    input.dataset.stepperized = "true";
+    const parent = input.parentNode;
+    parent.insertBefore(wrapper, input);
+    wrapper.appendChild(input);
+    controls.appendChild(decrementButton);
+    controls.appendChild(incrementButton);
+    wrapper.appendChild(controls);
+
+    incrementButton.addEventListener("click", () => {
+      input.stepUp();
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+
+    decrementButton.addEventListener("click", () => {
+      input.stepDown();
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+  });
 }
 
 function renderDynamicFields() {
@@ -74,6 +119,9 @@ function renderDynamicFields() {
     `;
     outputContainer.appendChild(wrapper);
   }
+
+  enhanceNumberSteppers(dgContainer);
+  enhanceNumberSteppers(outputContainer);
 }
 
 function collectInputs() {
@@ -268,6 +316,7 @@ function bindEvents() {
 document.addEventListener("DOMContentLoaded", async () => {
   elements.body = document.body;
   bindEvents();
+  enhanceNumberSteppers(document);
   renderDynamicFields();
   await loadInitialState();
 });
