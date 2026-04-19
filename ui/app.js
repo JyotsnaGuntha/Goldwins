@@ -15,6 +15,10 @@ const state = {
   lastDesign: null,
 };
 
+const FULLSCREEN_MIN_ZOOM = 1;
+const FULLSCREEN_MAX_ZOOM = 4;
+const FULLSCREEN_ZOOM_STEP = 0.12;
+let fullscreenZoom = 1;
 
 const elements = {};
 
@@ -145,6 +149,16 @@ function setLoading(isLoading) {
   document.body.classList.toggle("loading", isLoading);
 }
 
+function setFullscreenZoom(nextZoom) {
+  fullscreenZoom = Math.max(FULLSCREEN_MIN_ZOOM, Math.min(FULLSCREEN_MAX_ZOOM, nextZoom));
+  const fullscreenImage = $("fullscreenImage");
+  fullscreenImage.style.transform = `scale(${fullscreenZoom})`;
+}
+
+function resetFullscreenZoom() {
+  setFullscreenZoom(1);
+}
+
 function openFullscreenFromImage(imageElement) {
   if (!imageElement?.src) {
     return;
@@ -152,10 +166,12 @@ function openFullscreenFromImage(imageElement) {
   const overlay = $("fullscreenOverlay");
   const fullscreenImage = $("fullscreenImage");
   fullscreenImage.src = imageElement.src;
+  resetFullscreenZoom();
   overlay.classList.remove("hidden");
 }
 
 function closeFullscreen() {
+  resetFullscreenZoom();
   $("fullscreenOverlay").classList.add("hidden");
 }
 
@@ -313,6 +329,24 @@ function bindEvents() {
     if (event.target.id === "fullscreenOverlay") {
       closeFullscreen();
     }
+  });
+
+  $("fullscreenOverlay").addEventListener(
+    "wheel",
+    (event) => {
+      if ($("fullscreenOverlay").classList.contains("hidden")) {
+        return;
+      }
+      event.preventDefault();
+      const direction = event.deltaY < 0 ? 1 : -1;
+      const nextZoom = fullscreenZoom + (direction * FULLSCREEN_ZOOM_STEP);
+      setFullscreenZoom(nextZoom);
+    },
+    { passive: false },
+  );
+
+  $("fullscreenImage").addEventListener("dblclick", () => {
+    setFullscreenZoom(1);
   });
 
   document.addEventListener("keydown", (event) => {

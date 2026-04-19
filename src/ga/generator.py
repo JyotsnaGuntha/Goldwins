@@ -36,6 +36,7 @@ def generate_ga_svg(
     busbar_material,
     mccb_db,
     theme="dark",
+    include_spec_box=True,
 ):
     """
     Generate GA drawing as SVG string.
@@ -55,6 +56,7 @@ def generate_ga_svg(
         busbar_material: "Copper" or "Aluminium"
         mccb_db: MCCB dimensions database
         theme: "dark" or "light"
+        include_spec_box: include right-side GA specification table
     
     Returns:
         (svg_string, svg_width, svg_height, panel_w_mm, panel_h_mm, panel_d_mm)
@@ -91,7 +93,10 @@ def generate_ga_svg(
 
     # Scale: fit front view into FRONT_MAX_W × (SVG_H – top/bottom space)
     AVAIL_H = SVG_H - 100 - GA_BOTTOM_STRIP
-    SCALE = min(GA_FRONT_MAX_W / PANEL_W, AVAIL_H / (PANEL_H + PLINTH_H))
+    front_max_w = GA_FRONT_MAX_W
+    if not include_spec_box:
+        front_max_w = SVG_W - GA_LEFT_MARGIN - GA_ELEV_GAP - GA_SIDE_MAX_W - 20
+    SCALE = min(front_max_w / PANEL_W, AVAIL_H / (PANEL_H + PLINTH_H))
     # Side uses same vertical scale but independent horizontal scale
     SCALE_S = min(GA_SIDE_MAX_W / PANEL_D_, SCALE)
 
@@ -120,8 +125,13 @@ def generate_ga_svg(
 
     # Positioning
     TOP_Y = 90
-    FRONT_X = GA_LEFT_MARGIN
-    SIDE_X = FRONT_X + pF_W + GA_ELEV_GAP
+    if include_spec_box:
+        FRONT_X = GA_LEFT_MARGIN
+    else:
+        FRONT_X = max(10, (SVG_W - (pF_W + GA_ELEV_GAP + pF_D)) / 2)
+    # Keep enough clearance for BB/I/C dimension annotations in preview mode.
+    SIDE_GAP = GA_ELEV_GAP if include_spec_box else 72
+    SIDE_X = FRONT_X + pF_W + SIDE_GAP
 
     # Mounting plate top-left inside front view
     mp_x = FRONT_X + (pF_W - mF_W) / 2
@@ -367,71 +377,74 @@ def generate_ga_svg(
     arr_v(inc_dim_x, inc_top, inc_bot, f"I/C: {MAX_INC_H} mm", right=True)
 
     # ────────────────────────────────────────────────────────────────────────
-    # 10. SPEC BOX
+    # 10. SPEC BOX (optional)
     # ────────────────────────────────────────────────────────────────────────
     SB_W = 345
     SB_H = 240
     SB_X = SVG_W - SB_W - 16
     SB_Y = SVG_H - SB_H - GA_BOTTOM_STRIP - 10
 
-    dwg.add(dwg.rect(insert=(SB_X, SB_Y), size=(SB_W, SB_H),
-                     fill=SPEC_BG, stroke=SPEC_BD, stroke_width=1.8, rx=4))
-    hdr_h = 26
-    dwg.add(dwg.rect(insert=(SB_X, SB_Y), size=(SB_W, hdr_h),
-                     fill="#0d3a4a", stroke="none", rx=4))
-    dwg.add(dwg.line((SB_X, SB_Y + hdr_h), (SB_X + SB_W, SB_Y + hdr_h),
-                     stroke=SPEC_BD, stroke_width=0.8))
-    dwg.add(dwg.text("PANEL GA DRAWING — SPECIFICATIONS",
-                     insert=(SB_X + SB_W / 2, SB_Y + hdr_h / 2 + 5),
-                     font_size=11, fill=SPEC_BD, text_anchor="middle",
-                     font_family="Arial", font_weight="bold"))
-
-    specs = [
-        ("Panel Size  W × H × D", f"{PANEL_W} × {PANEL_H} × {PANEL_D_} mm"),
-        ("Mounting Plate  W × H", f"{MOUNT_W} × {MOUNT_H} mm"),
-        ("Plinth Height", f"{PLINTH_H} mm"),
-        ("Panel Colour", "RAL 7035 (Light Grey)"),
-        ("Mounting Plate Finish", "Chrome Plating / Zinc Passivated"),
-        ("Busbar Chamber Height", f"{BUSBAR_CH} mm  (IEC 61439)"),
-        ("Busbar Thickness", f"{busbar_thick} mm"),
-        (f"{busbar_material} Busbar", busbar_spec_text),
-        ("Total Busbar Current", f"{busbar_current:.1f} A"),
-        ("Incomers / Outgoing", f"{len(incomer_mccbs)} / {len(outgoing_mccbs)}"),
-        ("Phase–Phase Clearance", f"≥ {CLEARANCE_PP} mm"),
-        ("Phase–Earth Clearance", f"≥ {CLEARANCE_PE} mm"),
-    ]
-
-    row_h = (SB_H - hdr_h) / len(specs)
-    DIV_X = SB_X + 170
-
-    for i, (key, val) in enumerate(specs):
-        ry = SB_Y + hdr_h + i * row_h
-        if i % 2 == 1:
-            dwg.add(dwg.rect(insert=(SB_X + 1, ry), size=(SB_W - 2, row_h), fill="#0b2035"))
-        dwg.add(dwg.line((SB_X, ry), (SB_X + SB_W, ry), stroke="#1e3a5f", stroke_width=0.4))
-        dwg.add(dwg.line((DIV_X, ry), (DIV_X, ry + row_h), stroke="#1e3a5f", stroke_width=0.4))
-        ty = ry + row_h / 2 + 3.5
-        dwg.add(dwg.text(key, insert=(SB_X + 6, ty),
-                         font_size=8.5, fill=SUB_C, font_family="Arial"))
-        dwg.add(dwg.text(val, insert=(SB_X + SB_W - 6, ty),
-                         font_size=8.5, fill=TEXT_C, text_anchor="end",
+    if include_spec_box:
+        dwg.add(dwg.rect(insert=(SB_X, SB_Y), size=(SB_W, SB_H),
+                         fill=SPEC_BG, stroke=SPEC_BD, stroke_width=1.8, rx=4))
+        hdr_h = 26
+        dwg.add(dwg.rect(insert=(SB_X, SB_Y), size=(SB_W, hdr_h),
+                         fill="#0d3a4a", stroke="none", rx=4))
+        dwg.add(dwg.line((SB_X, SB_Y + hdr_h), (SB_X + SB_W, SB_Y + hdr_h),
+                         stroke=SPEC_BD, stroke_width=0.8))
+        dwg.add(dwg.text("PANEL GA DRAWING — SPECIFICATIONS",
+                         insert=(SB_X + SB_W / 2, SB_Y + hdr_h / 2 + 5),
+                         font_size=11, fill=SPEC_BD, text_anchor="middle",
                          font_family="Arial", font_weight="bold"))
 
-    dwg.add(dwg.rect(insert=(SB_X, SB_Y), size=(SB_W, SB_H),
-                     fill="none", stroke=SPEC_BD, stroke_width=1.8, rx=4))
+        specs = [
+            ("Panel Size  W × H × D", f"{PANEL_W} × {PANEL_H} × {PANEL_D_} mm"),
+            ("Mounting Plate  W × H", f"{MOUNT_W} × {MOUNT_H} mm"),
+            ("Plinth Height", f"{PLINTH_H} mm"),
+            ("Panel Colour", "RAL 7035 (Light Grey)"),
+            ("Mounting Plate Finish", "Chrome Plating / Zinc Passivated"),
+            ("Busbar Chamber Height", f"{BUSBAR_CH} mm  (IEC 61439)"),
+            ("Busbar Thickness", f"{busbar_thick} mm"),
+            (f"{busbar_material} Busbar", busbar_spec_text),
+            ("Total Busbar Current", f"{busbar_current:.1f} A"),
+            ("Incomers / Outgoing", f"{len(incomer_mccbs)} / {len(outgoing_mccbs)}"),
+            ("Phase–Phase Clearance", f"≥ {CLEARANCE_PP} mm"),
+            ("Phase–Earth Clearance", f"≥ {CLEARANCE_PE} mm"),
+        ]
+
+        row_h = (SB_H - hdr_h) / len(specs)
+        DIV_X = SB_X + 170
+
+        for i, (key, val) in enumerate(specs):
+            ry = SB_Y + hdr_h + i * row_h
+            if i % 2 == 1:
+                dwg.add(dwg.rect(insert=(SB_X + 1, ry), size=(SB_W - 2, row_h), fill="#0b2035"))
+            dwg.add(dwg.line((SB_X, ry), (SB_X + SB_W, ry), stroke="#1e3a5f", stroke_width=0.4))
+            dwg.add(dwg.line((DIV_X, ry), (DIV_X, ry + row_h), stroke="#1e3a5f", stroke_width=0.4))
+            ty = ry + row_h / 2 + 3.5
+            dwg.add(dwg.text(key, insert=(SB_X + 6, ty),
+                             font_size=8.5, fill=SUB_C, font_family="Arial"))
+            dwg.add(dwg.text(val, insert=(SB_X + SB_W - 6, ty),
+                             font_size=8.5, fill=TEXT_C, text_anchor="end",
+                             font_family="Arial", font_weight="bold"))
+
+        dwg.add(dwg.rect(insert=(SB_X, SB_Y), size=(SB_W, SB_H),
+                         fill="none", stroke=SPEC_BD, stroke_width=1.8, rx=4))
 
     # ────────────────────────────────────────────────────────────────────────
     # 11. Title strip at bottom
     # ────────────────────────────────────────────────────────────────────────
+    strip_reserved_w = SB_W + 28 if include_spec_box else 28
+    strip_text_right_x = SVG_W - SB_W - 45 if include_spec_box else SVG_W - 45
     strip_y = SVG_H - GA_BOTTOM_STRIP
-    dwg.add(dwg.rect(insert=(0, strip_y), size=(SVG_W - SB_W - 28, GA_BOTTOM_STRIP),
+    dwg.add(dwg.rect(insert=(0, strip_y), size=(SVG_W - strip_reserved_w, GA_BOTTOM_STRIP),
                      fill="#060d1a", stroke="#1e3a5f", stroke_width=1))
     dwg.add(dwg.text("MICROGRID PANEL  —  GENERAL ARRANGEMENT (GA)",
                      insert=(18, strip_y + GA_BOTTOM_STRIP / 2 + 5),
                      font_size=13, fill=HEAD_C, font_family="Arial", font_weight="bold"))
     now_str = datetime.datetime.now().strftime("%d-%b-%Y")
     dwg.add(dwg.text(f"Date: {now_str}  |  Scale: NTS  |  IEC 61439 compliant",
-                     insert=(SVG_W - SB_W - 45, strip_y + GA_BOTTOM_STRIP / 2 + 5),
+                     insert=(strip_text_right_x, strip_y + GA_BOTTOM_STRIP / 2 + 5),
                      font_size=9, fill=SUB_C, text_anchor="end", font_family="Arial"))
 
     return dwg.tostring(), SVG_W, SVG_H, PANEL_W, PANEL_H, PANEL_D_

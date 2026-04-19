@@ -335,6 +335,7 @@ class MicrogridBridge:
             busbar_material,
             active_db,
             theme=theme,
+            include_spec_box=False,
         )
 
         theme_colors = get_theme_colors(theme)
