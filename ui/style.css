@@ -156,7 +156,7 @@ h1 {
 .header-actions {
   display: flex;
   gap: 6px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: flex-end;
   align-items: flex-start;
 }
@@ -386,6 +386,22 @@ button:active {
   color: var(--text);
   background: rgba(148, 163, 184, 0.12);
   border: 1px solid var(--border);
+}
+
+.icon-button {
+  color: var(--text);
+  background: rgba(148, 163, 184, 0.12);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.5rem 0.62rem;
+  white-space: nowrap;
+}
+
+.icon-button svg {
+  flex-shrink: 0;
+  stroke: currentColor;
 }
 
 .button-row {
