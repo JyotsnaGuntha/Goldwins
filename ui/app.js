@@ -224,7 +224,7 @@ function bindEvents() {
     await generateDesign();
   });
 
-  ["generateButton", "generateButtonAlt"].forEach((id) => {
+  ["generateButton", "generateButtonOutput"].forEach((id) => {
     $(id).addEventListener("click", generateDesign);
   });
 

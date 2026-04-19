@@ -133,6 +133,32 @@ h1 {
 .panel-header {
   padding: 10px 14px 8px;
   border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.header-content {
+  display: grid;
+  gap: 0;
+  min-width: 0;
+}
+
+.header-content h2 {
+  margin: 0;
+}
+
+.header-content p {
+  margin: 2px 0 0;
+}
+
+.header-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: flex-start;
 }
 
 .control-stack,
