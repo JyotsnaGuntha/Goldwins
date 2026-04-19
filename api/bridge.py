@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import base64
 import io
+import re
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List
@@ -117,13 +118,17 @@ class MicrogridBridge:
     def export_pdf(self, payload=None):
         try:
             design = self._compute_design(payload or self.last_payload)
+            # Regenerate SVGs with light theme for export
+            sld_svg_light, sld_w_light, sld_h_light = self._generate_sld_light(design)
+            ga_svg_light, ga_w_light, ga_h_light = self._generate_ga_svg_light(design)
+            
             pdf_buffer = generate_pdf_report(
-                design["sld"]["svg"],
-                design["sld"]["width"],
-                design["sld"]["height"],
-                design["ga"]["svg"],
-                design["ga"]["width"],
-                design["ga"]["height"],
+                sld_svg_light,
+                sld_w_light,
+                sld_h_light,
+                ga_svg_light,
+                ga_w_light,
+                ga_h_light,
                 design["incomer_list"],
                 design["mccb_outputs"],
                 design["bom_objects"],
@@ -152,10 +157,13 @@ class MicrogridBridge:
     def export_ga_pdf(self, payload=None):
         try:
             design = self._compute_design(payload or self.last_payload)
+            # Regenerate GA SVG with light theme for export
+            ga_svg_light, ga_w_light, ga_h_light = self._generate_ga_svg_light(design)
+            
             pdf_buffer = generate_ga_pdf(
-                design["ga"]["svg"],
-                design["ga"]["width"],
-                design["ga"]["height"],
+                ga_svg_light,
+                ga_w_light,
+                ga_h_light,
                 design["incomer_list"],
                 design["mccb_outputs"],
                 design["ga"]["panel_w"],
@@ -219,6 +227,74 @@ class MicrogridBridge:
                 }
             )
         return preview
+
+    def _generate_sld_light(self, design):
+        """Generate SLD SVG with light theme colors for export."""
+        inputs = design["inputs"]
+        summary = design["summary"]
+        
+        # Reconstruct SystemCalculations for SLD generation
+        system_calcs = SystemCalculations(
+            solar_kw=inputs["solar_kw"],
+            grid_kw=inputs["grid_kw"],
+            dg_ratings_kva=inputs.get("dg_ratings", []),
+        )
+        
+        theme_colors = get_theme_colors("light")
+        sld_svg, sld_w, sld_h = generate_sld(
+            system_calcs,
+            inputs["num_outputs"],
+            design["mccb_outputs"],
+            inputs["num_poles"],
+            inputs["num_dg"],
+            inputs["grid_kw"],
+            inputs["solar_kw"],
+            summary["total_busbar_current"],
+            theme_colors["svg_bg"],
+            theme_colors["text"],
+            theme_colors["svg_stroke"],
+            theme_colors["subtitle"],
+        )
+        return self._normalize_export_svg_light(sld_svg), sld_w, sld_h
+
+    def _generate_ga_svg_light(self, design):
+        """Generate GA SVG with light theme colors for export."""
+        inputs = design["inputs"]
+        summary = design["summary"]
+        
+        ga_svg_str, ga_w, ga_h, _, _, _ = generate_ga_svg(
+            design["incomer_list"],
+            design["mccb_outputs"],
+            summary["total_busbar_current"],
+            summary["busbar_spec"],
+            inputs["num_poles"],
+            inputs["busbar_material"],
+            self._active_db(),
+            theme="light",
+        )
+        return self._normalize_export_svg_light(ga_svg_str), ga_w, ga_h
+
+    def _normalize_export_svg_light(self, svg_text):
+        """Normalize known dark hardcoded SVG colors for export output."""
+        replacements = {
+            "#020617": "#ffffff",
+            "#0a0f1e": "#ffffff",
+            "#08121f": "#f1f5f9",
+            "#0a1a2e": "#f8fafc",
+            "#1a2e4a": "#e2e8f0",
+            "#1e4080": "#cbd5e1",
+            "#334155": "#cbd5e1",
+            "#2563eb": "#94a3b8",
+            "#94a3b8": "#64748b",
+            "#6366f1": "#475569",
+            "#a78bfa": "#7c3aed",
+            "#c4b5fd": "#7c3aed",
+        }
+
+        normalized = svg_text
+        for dark_color, light_color in replacements.items():
+            normalized = re.sub(re.escape(dark_color), light_color, normalized, flags=re.IGNORECASE)
+        return normalized
 
     def _compute_design(self, payload):
         theme = payload.get("theme", self.theme)
