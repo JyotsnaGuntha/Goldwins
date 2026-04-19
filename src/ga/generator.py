@@ -156,6 +156,15 @@ def generate_ga_svg(
     HEAD_C = C["header"]
     SUB_C = C["sub"]
     GRID_C = C["grid"]
+    is_dark_theme = theme == "dark"
+    BASE_PLINTH = "#08121f" if is_dark_theme else "#e5e7eb"
+    PANEL_GUIDE = "#2563eb" if is_dark_theme else "#94a3b8"
+    PLATE_STROKE = "#3b82f6" if is_dark_theme else "#94a3b8"
+    HMI_BG = "#0a1a2e" if is_dark_theme else "#f8fafc"
+    HMI_TXT = "#60a5fa" if is_dark_theme else "#334155"
+    SPEC_HEADER_BG = "#0d3a4a" if is_dark_theme else "#e6f4f3"
+    SPEC_GRID = "#1e3a5f" if is_dark_theme else "#cbd5e1"
+    TITLE_STRIP_BG = "#060d1a" if is_dark_theme else "#e2e8f0"
 
     # ────────────────────────────────────────────────────────────────────────
     # 4. Create SVG
@@ -241,17 +250,17 @@ def generate_ga_svg(
     # ────────────────────────────────────────────────────────────────────────
     plinth_y = TOP_Y + pF_H
     dwg.add(dwg.rect(insert=(FRONT_X, plinth_y), size=(pF_W, pF_PL),
-                     fill="#08121f", stroke=STROKE, stroke_width=1.5))
+                     fill=BASE_PLINTH, stroke=STROKE, stroke_width=1.5))
     hatch(FRONT_X, plinth_y, pF_W, pF_PL, step=12)
     dwg.add(dwg.rect(insert=(FRONT_X, TOP_Y), size=(pF_W, pF_H),
                      fill=SHELL, stroke=STROKE, stroke_width=2.5))
     bz = 10
     dwg.add(dwg.rect(insert=(FRONT_X + bz, TOP_Y + bz), size=(pF_W - 2 * bz, pF_H - 2 * bz),
-                     fill="none", stroke="#2563eb", stroke_width=0.9, stroke_dasharray="8,5"))
+                     fill="none", stroke=PANEL_GUIDE, stroke_width=0.9, stroke_dasharray="8,5"))
 
     # Mounting plate outline (dashed, no content inside)
     dwg.add(dwg.rect(insert=(mp_x, mp_y), size=(mF_W, mF_H),
-                     fill=MP_C, stroke="#3b82f6", stroke_width=1.1, stroke_dasharray="6,4"))
+                     fill=MP_C, stroke=PLATE_STROKE, stroke_width=1.1, stroke_dasharray="6,4"))
 
     # ── Internal zone dividers
     cur_y = mp_y
@@ -305,10 +314,10 @@ def generate_ga_svg(
     hmi_h = inc_bot - hmi_y - hmi_m
 
     dwg.add(dwg.rect(insert=(hmi_x, hmi_y), size=(hmi_w, hmi_h),
-                     fill="#0a1a2e", stroke="#3b82f6", stroke_width=1.8, rx=8))
+                     fill=HMI_BG, stroke=PLATE_STROKE, stroke_width=1.8, rx=8))
     dwg.add(dwg.text("HMI / DISPLAY",
                      insert=(hmi_x + hmi_w / 2, hmi_y + hmi_h / 2 + 6),
-                     font_size=13, fill="#60a5fa", text_anchor="middle",
+                     font_size=13, fill=HMI_TXT, text_anchor="middle",
                      font_family="Arial", font_weight="bold"))
 
     # Labels
@@ -321,12 +330,12 @@ def generate_ga_svg(
     # 8. SIDE ELEVATION
     # ────────────────────────────────────────────────────────────────────────
     dwg.add(dwg.rect(insert=(SIDE_X, plinth_y), size=(pF_D, pF_PL),
-                     fill="#08121f", stroke=STROKE, stroke_width=1.5))
+                     fill=BASE_PLINTH, stroke=STROKE, stroke_width=1.5))
     hatch(SIDE_X, plinth_y, pF_D, pF_PL, step=12)
     dwg.add(dwg.rect(insert=(SIDE_X, TOP_Y), size=(pF_D, pF_H),
                      fill=SHELL, stroke=STROKE, stroke_width=2.5))
     dwg.add(dwg.rect(insert=(SIDE_X + bz, TOP_Y + bz), size=(pF_D - 2 * bz, pF_H - 2 * bz),
-                     fill="none", stroke="#2563eb", stroke_width=0.9, stroke_dasharray="8,5"))
+                     fill="none", stroke=PANEL_GUIDE, stroke_width=0.9, stroke_dasharray="8,5"))
     dwg.add(dwg.text("SIDE ELEVATION",
                      insert=(SIDE_X + pF_D / 2, TOP_Y + pF_H + pF_PL + 20),
                      font_size=12, fill=TEXT_C, text_anchor="middle",
@@ -389,7 +398,7 @@ def generate_ga_svg(
                          fill=SPEC_BG, stroke=SPEC_BD, stroke_width=1.8, rx=4))
         hdr_h = 26
         dwg.add(dwg.rect(insert=(SB_X, SB_Y), size=(SB_W, hdr_h),
-                         fill="#0d3a4a", stroke="none", rx=4))
+                         fill=SPEC_HEADER_BG, stroke="none", rx=4))
         dwg.add(dwg.line((SB_X, SB_Y + hdr_h), (SB_X + SB_W, SB_Y + hdr_h),
                          stroke=SPEC_BD, stroke_width=0.8))
         dwg.add(dwg.text("PANEL GA DRAWING — SPECIFICATIONS",
@@ -417,8 +426,8 @@ def generate_ga_svg(
 
         for i, (key, val) in enumerate(specs):
             ry = SB_Y + hdr_h + i * row_h
-            dwg.add(dwg.line((SB_X, ry), (SB_X + SB_W, ry), stroke="#1e3a5f", stroke_width=0.4))
-            dwg.add(dwg.line((DIV_X, ry), (DIV_X, ry + row_h), stroke="#1e3a5f", stroke_width=0.4))
+            dwg.add(dwg.line((SB_X, ry), (SB_X + SB_W, ry), stroke=SPEC_GRID, stroke_width=0.4))
+            dwg.add(dwg.line((DIV_X, ry), (DIV_X, ry + row_h), stroke=SPEC_GRID, stroke_width=0.4))
             ty = ry + row_h / 2 + 3.5
             dwg.add(dwg.text(key, insert=(SB_X + 6, ty),
                              font_size=8.5, fill=SUB_C, font_family="Arial"))
@@ -436,7 +445,7 @@ def generate_ga_svg(
     strip_text_right_x = SVG_W - SB_W - 45 if include_spec_box else SVG_W - 45
     strip_y = SVG_H - GA_BOTTOM_STRIP
     dwg.add(dwg.rect(insert=(0, strip_y), size=(SVG_W - strip_reserved_w, GA_BOTTOM_STRIP),
-                     fill="#060d1a", stroke="#1e3a5f", stroke_width=1))
+                     fill=TITLE_STRIP_BG, stroke=SPEC_GRID, stroke_width=1))
     dwg.add(dwg.text("MICROGRID PANEL  —  GENERAL ARRANGEMENT (GA)",
                      insert=(18, strip_y + GA_BOTTOM_STRIP / 2 + 5),
                      font_size=13, fill=HEAD_C, font_family="Arial", font_weight="bold"))

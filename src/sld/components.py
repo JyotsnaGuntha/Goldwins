@@ -78,17 +78,26 @@ def draw_tower(dwg, x, y, theme_text="#e2e8f0"):
                          stroke=theme_text, stroke_width=0.8, stroke_opacity=0.4))
 
 
-def draw_solar(dwg, x, y, theme_text="#e2e8f0"):
+def draw_solar(
+    dwg,
+    x,
+    y,
+    theme_text="#e2e8f0",
+    panel_fill="#1e293b",
+    sun_color="#fbbf24",
+):
     """
     Draw solar PV symbol with sun rays.
     
     Args:
         dwg: svgwrite Drawing object
         x, y: Position of solar symbol
-        theme_text: Fill/stroke color
+        theme_text: Line and text color
+        panel_fill: Solar panel body fill color
+        sun_color: Sun/rays color
     """
     dwg.add(dwg.path(d=f"M{x-20},{y+55} L{x+20},{y+55} L{x+30},{y+20} L{x-30},{y+20} Z", 
-                     fill="#1e293b", stroke=theme_text, stroke_width=2))
+                     fill=panel_fill, stroke=theme_text, stroke_width=2))
     
     for i in range(1, 4):
         h_y = y + 20 + i * (35 / 4)
@@ -100,7 +109,7 @@ def draw_solar(dwg, x, y, theme_text="#e2e8f0"):
     dwg.add(dwg.line((x + 10, y + 20), (x + 8, y + 55), stroke=theme_text, stroke_opacity=0.4))
     
     cx, cy = x - 25, y - 5
-    dwg.add(dwg.circle(center=(cx, cy), r=10, stroke="#fbbf24", fill="none", stroke_width=2.5))
+    dwg.add(dwg.circle(center=(cx, cy), r=10, stroke=sun_color, fill="none", stroke_width=2.5))
     
     for i in range(8):
         angle = i * 45
@@ -109,22 +118,32 @@ def draw_solar(dwg, x, y, theme_text="#e2e8f0"):
         y1 = cy + r1 * math.sin(math.radians(angle))
         x2 = cx + r2 * math.cos(math.radians(angle))
         y2 = cy + r2 * math.sin(math.radians(angle))
-        dwg.add(dwg.line((x1, y1), (x2, y2), stroke="#fbbf24", stroke_width=1.5))
+        dwg.add(dwg.line((x1, y1), (x2, y2), stroke=sun_color, stroke_width=1.5))
 
 
-def draw_mgc(dwg, x, y):
+def draw_mgc(
+    dwg,
+    x,
+    y,
+    fill_color="#1e1b4b",
+    stroke_color="#a78bfa",
+    text_color="white",
+):
     """
     Draw Microgrid Controller (MGC) symbol.
     
     Args:
         dwg: svgwrite Drawing object
         x, y: Top-left position of MGC box
+        fill_color: MGC outer box fill color
+        stroke_color: MGC outline and pin color
+        text_color: MGC label text color
     """
     size = 100
-    dwg.add(dwg.rect(insert=(x, y), size=(size, size), fill="#1e1b4b", 
-                     stroke="#a78bfa", stroke_width=3, rx=8))
+    dwg.add(dwg.rect(insert=(x, y), size=(size, size), fill=fill_color, 
+                     stroke=stroke_color, stroke_width=3, rx=8))
     dwg.add(dwg.rect(insert=(x + 15, y + 15), size=(70, 70), fill="none", 
-                     stroke="#a78bfa", stroke_width=2))
+                     stroke=stroke_color, stroke_width=2))
     
     pin_len = 12
     spacing = size / 7
@@ -132,13 +151,13 @@ def draw_mgc(dwg, x, y):
     for i in range(1, 7):
         pos = i * spacing
         dwg.add(dwg.line((x + pos, y - pin_len), (x + pos, y), 
-                         stroke="#a78bfa", stroke_width=2.5))
+                         stroke=stroke_color, stroke_width=2.5))
         dwg.add(dwg.line((x + pos, y + size), (x + pos, y + size + pin_len), 
-                         stroke="#a78bfa", stroke_width=2.5))
+                         stroke=stroke_color, stroke_width=2.5))
         dwg.add(dwg.line((x - pin_len, y + pos), (x, y + pos), 
-                         stroke="#a78bfa", stroke_width=2.5))
+                         stroke=stroke_color, stroke_width=2.5))
         dwg.add(dwg.line((x + size, y + pos), (x + size + pin_len, y + pos), 
-                         stroke="#a78bfa", stroke_width=2.5))
+                         stroke=stroke_color, stroke_width=2.5))
     
     dwg.add(dwg.text("MGC", insert=(x + size / 2, y + size / 2 + 8), 
-                     font_size=20, fill="white", font_weight="bold", text_anchor="middle"))
+                     font_size=20, fill=text_color, font_weight="bold", text_anchor="middle"))

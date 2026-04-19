@@ -66,6 +66,20 @@ def generate_sld(
         (svg_string, canvas_width, canvas_height)
     """
     width, height, inc_spacing, out_spacing, x_init = compute_canvas(num_dg, grid_kw, solar_kw, num_outputs)
+
+    is_dark_theme = theme_text.lower() in ("#e2e8f0", "#e7eef9")
+    scope_line_color = "#475569" if is_dark_theme else "#94a3b8"
+    scope_label_color = "#94a3b8" if is_dark_theme else "#475569"
+    panel_label_color = "#6366f1" if is_dark_theme else "#475569"
+    auto_manual_color = "#cbd5e1" if is_dark_theme else "#64748b"
+    dg_circle_color = "#60a5fa" if is_dark_theme else "#64748b"
+    comm_line_color = "#a78bfa" if is_dark_theme else "#64748b"
+    comm_label_color = "#c4b5fd" if is_dark_theme else "#64748b"
+    solar_panel_fill = "#1e293b" if is_dark_theme else "#f8fafc"
+    solar_sun_color = "#fbbf24" if is_dark_theme else "#d97706"
+    mgc_fill_color = "#1e1b4b" if is_dark_theme else "#eef2ff"
+    mgc_stroke_color = "#a78bfa" if is_dark_theme else "#64748b"
+    mgc_text_color = "#ffffff" if is_dark_theme else "#334155"
     
     dwg = svg.Drawing(size=(width, height), profile="full")
     dwg.viewbox(0, 0, width, height)
@@ -78,20 +92,20 @@ def generate_sld(
     
     # Division line between customer scope and supplier scope
     dwg.add(dwg.line((30, y_division), (width - 30, y_division), 
-                     stroke="#475569", stroke_width=1, stroke_dasharray="8,4"))
+                     stroke=scope_line_color, stroke_width=1, stroke_dasharray="8,4"))
     dwg.add(dwg.text("Customer Scope", insert=(width / 2, 50), 
-                     font_size=20, font_weight="bold", fill="#94a3b8", text_anchor="middle"))
+                     font_size=20, font_weight="bold", fill=scope_label_color, text_anchor="middle"))
     dwg.add(dwg.text("Kirloskar Scope", insert=(50, height - 40), 
-                     font_size=20, font_weight="bold", fill="#94a3b8"))
+                     font_size=20, font_weight="bold", fill=scope_label_color))
     dwg.add(dwg.text("Smart AMF Panel", insert=(width - 220, height - 40), 
-                     font_size=18, fill="#6366f1"))
+                     font_size=18, fill=panel_label_color))
     
     # MGC (Microgrid Controller)
     mgc_x = width - 155
     mgc_y = y_division - 18
-    draw_mgc(dwg, mgc_x, mgc_y)
+    draw_mgc(dwg, mgc_x, mgc_y, mgc_fill_color, mgc_stroke_color, mgc_text_color)
     dwg.add(dwg.text("Auto / Manual", insert=(mgc_x + 50, mgc_y - 15), 
-                     font_size=13, fill="#cbd5e1", text_anchor="middle"))
+                     font_size=13, fill=auto_manual_color, text_anchor="middle"))
     
     # ────────────────────────────────────────────────────────────────────────────────
     # Draw DG incomers
@@ -104,7 +118,7 @@ def generate_sld(
         cx = current_x
         dwg.add(dwg.text(f"{system_calcs.dg_ratings_kva[i]} kVA", insert=(cx, y_sources - 85), 
                          font_size=16, font_weight="bold", fill=theme_text, text_anchor="middle"))
-        dwg.add(dwg.circle(center=(cx, y_sources), r=45, stroke="#60a5fa", 
+        dwg.add(dwg.circle(center=(cx, y_sources), r=45, stroke=dg_circle_color, 
                           fill="none", stroke_width=2.5))
         dwg.add(dwg.text(f"DG {i + 1}", insert=(cx, y_sources + 7), 
                          font_size=15, fill=theme_text, text_anchor="middle"))
@@ -143,7 +157,7 @@ def generate_sld(
         cx = current_x
         dwg.add(dwg.text(f"{solar_kw} kWp", insert=(cx, y_sources - 85), 
                          font_size=16, font_weight="bold", fill=theme_text, text_anchor="middle"))
-        draw_solar(dwg, cx, y_sources - 30, theme_text)
+        draw_solar(dwg, cx, y_sources - 30, theme_text, solar_panel_fill, solar_sun_color)
         dwg.add(dwg.line((cx, y_sources + 25), (cx, y_division + 50), 
                          stroke=theme_text, stroke_width=2))
         draw_mccb(dwg, cx, y_division + 100, system_calcs.mccb_solar, num_poles, 
@@ -170,24 +184,24 @@ def generate_sld(
     if active_ics_x:
         comm_y = y_division + 25
         dwg.add(dwg.line((active_ics_x[0], comm_y), (mgc_x - 12, comm_y), 
-                         stroke="#a78bfa", stroke_width=1.2, stroke_dasharray="6,3"))
+                         stroke=comm_line_color, stroke_width=1.2, stroke_dasharray="6,3"))
         for ax in active_ics_x:
             dwg.add(dwg.line((ax, comm_y), (ax, y_division + 50), 
-                             stroke="#a78bfa", stroke_width=1, stroke_dasharray="4,2"))
+                             stroke=comm_line_color, stroke_width=1, stroke_dasharray="4,2"))
         
         x_out_start = x_init + (inc_spacing / 2)
         mgc_pin_x = mgc_x + (3 * (100 / 7))
         comm_y_bottom = y_busbar + 160
         dwg.add(dwg.line((x_out_start, comm_y_bottom), (mgc_pin_x, comm_y_bottom), 
-                         stroke="#a78bfa", stroke_width=1.2, stroke_dasharray="6,3"))
+                         stroke=comm_line_color, stroke_width=1.2, stroke_dasharray="6,3"))
         dwg.add(dwg.line((mgc_pin_x, mgc_y + 112), (mgc_pin_x, comm_y_bottom), 
-                         stroke="#a78bfa", stroke_width=1.2, stroke_dasharray="6,3"))
+                         stroke=comm_line_color, stroke_width=1.2, stroke_dasharray="6,3"))
         for i in range(int(num_outputs)):
             ox = x_out_start + i * inc_spacing
             if ox > (mgc_x - 50):
                 break
             dwg.add(dwg.line((ox, comm_y_bottom), (ox, y_busbar + 125), 
-                             stroke="#a78bfa", stroke_width=1, stroke_dasharray="4,2"))
+                             stroke=comm_line_color, stroke_width=1, stroke_dasharray="4,2"))
     
     # ────────────────────────────────────────────────────────────────────────────────
     # Draw outgoing feeders
@@ -215,10 +229,10 @@ def generate_sld(
         dwg.add(dwg.rect(insert=(width / 2 - 120, comm_y - 12), size=(240, 24), 
                          fill=theme_svg_bg, stroke="none"))
         dwg.add(dwg.text(label_text, insert=(width / 2, comm_y + 6), 
-                         font_size=13, fill="#c4b5fd", text_anchor="middle"))
+                         font_size=13, fill=comm_label_color, text_anchor="middle"))
         dwg.add(dwg.rect(insert=(width / 2 - 120, comm_y_bottom - 12), size=(240, 24), 
                          fill=theme_svg_bg, stroke="none"))
         dwg.add(dwg.text(label_text, insert=(width / 2, comm_y_bottom + 6), 
-                         font_size=13, fill="#c4b5fd", text_anchor="middle"))
+                         font_size=13, fill=comm_label_color, text_anchor="middle"))
     
     return dwg.tostring(), width, height
