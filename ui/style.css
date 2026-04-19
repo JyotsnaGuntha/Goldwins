@@ -111,6 +111,28 @@ h1 {
   justify-content: flex-end;
 }
 
+.kirloskar-logo {
+  height: 60px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+  background: transparent;
+  padding: 0;
+  border: 0;
+}
+
+.theme-emoji-button {
+  min-width: 36px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
 .workspace {
   min-height: 0;
   display: grid;
@@ -477,5 +499,10 @@ button:active {
 
   button {
     width: 100%;
+  }
+
+  .theme-emoji-button {
+    width: 36px;
+    min-width: 36px;
   }
 }

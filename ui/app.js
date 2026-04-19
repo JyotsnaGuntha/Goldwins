@@ -208,7 +208,9 @@ async function loadInitialState() {
   $("numPoles").value = state.num_poles;
 
   document.body.dataset.theme = state.theme;
-  $("themeToggle").textContent = state.theme === "dark" ? "Light mode" : "Dark mode";
+  $("themeToggle").textContent = state.theme === "dark" ? "☀️" : "🌙";
+  $("themeToggle").setAttribute("aria-label", state.theme === "dark" ? "Switch to light theme" : "Switch to dark theme");
+  $("themeToggle").setAttribute("title", state.theme === "dark" ? "Switch to light theme" : "Switch to dark theme");
 
   renderDynamicFields();
   await generateDesign();
@@ -218,13 +220,15 @@ function bindEvents() {
   $("themeToggle").addEventListener("click", async () => {
     state.theme = state.theme === "dark" ? "light" : "dark";
     document.body.dataset.theme = state.theme;
-    $("themeToggle").textContent = state.theme === "dark" ? "Light mode" : "Dark mode";
+    $("themeToggle").textContent = state.theme === "dark" ? "☀️" : "🌙";
+    $("themeToggle").setAttribute("aria-label", state.theme === "dark" ? "Switch to light theme" : "Switch to dark theme");
+    $("themeToggle").setAttribute("title", state.theme === "dark" ? "Switch to light theme" : "Switch to dark theme");
     const api = await waitForApi();
     await api.set_theme(state.theme);
     await generateDesign();
   });
 
-  ["generateButton", "generateButtonOutput"].forEach((id) => {
+  ["generateButtonOutput"].forEach((id) => {
     $(id).addEventListener("click", generateDesign);
   });
 
