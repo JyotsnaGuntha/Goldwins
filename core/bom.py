@@ -6,18 +6,88 @@ import base64
 import datetime
 import io
 import os
+import sys
 import tempfile
+from pathlib import Path
 
 import pandas as pd
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4, landscape
 from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen import canvas
 from reportlab.platypus import PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 from svglib.svglib import svg2rlg
 
 from src.bom.generator import BOMItem, generate_bom_items
 from src.utils import get_mccb_dims
+
+
+def _resolve_logo_path() -> str | None:
+    """Return an absolute path to the footer logo for source and frozen runs."""
+    logo_name = "Kirloskar Oil Engine Logo.png"
+    candidates = []
+
+    # PyInstaller one-file/one-dir extraction root.
+    meipass = getattr(sys, "_MEIPASS", None)
+    if meipass:
+        candidates.append(Path(meipass) / logo_name)
+        candidates.append(Path(meipass) / "ui" / logo_name)
+
+    # Location beside executable (useful for one-dir bundles).
+    executable_dir = Path(sys.executable).resolve().parent
+    candidates.append(executable_dir / logo_name)
+    candidates.append(executable_dir / "ui" / logo_name)
+
+    # Project root when running from source: core/bom.py -> ../
+    candidates.append(Path(__file__).resolve().parents[1] / logo_name)
+    candidates.append(Path(__file__).resolve().parents[1] / "ui" / logo_name)
+
+    # Current working directory fallback.
+    candidates.append(Path.cwd() / logo_name)
+    candidates.append(Path.cwd() / "ui" / logo_name)
+
+    for candidate in candidates:
+        if candidate.exists():
+            return str(candidate)
+    return None
+
+
+def _draw_logo(canvas_obj, logo_x, logo_y, logo_w, logo_h):
+    """Draw logo safely in both source and frozen runtimes."""
+    logo_path = _resolve_logo_path()
+    if not logo_path:
+        return
+
+    try:
+        canvas_obj.drawImage(
+            logo_path,
+            logo_x,
+            logo_y,
+            width=logo_w,
+            height=logo_h,
+            preserveAspectRatio=True,
+            mask="auto",
+        )
+        return
+    except Exception:
+        pass
+
+    # Fallback: read bytes and render through ImageReader.
+    try:
+        with open(logo_path, "rb") as file_handle:
+            image_reader = ImageReader(io.BytesIO(file_handle.read()))
+        canvas_obj.drawImage(
+            image_reader,
+            logo_x,
+            logo_y,
+            width=logo_w,
+            height=logo_h,
+            preserveAspectRatio=True,
+            mask="auto",
+        )
+    except Exception:
+        pass
 
 
 class NumberedCanvas(canvas.Canvas):
@@ -41,20 +111,8 @@ class NumberedCanvas(canvas.Canvas):
 
     def draw_footer(self, page_count):
         self.saveState()
-        logo_path = "Kirloskar Oil Engine Logo.png"
         logo_w, logo_h = 100, 35
-        try:
-            self.drawImage(
-                logo_path,
-                A4[0] - 45 - logo_w,
-                A4[1] - 30 - logo_h,
-                width=logo_w,
-                height=logo_h,
-                preserveAspectRatio=True,
-                mask="auto",
-            )
-        except Exception:
-            pass
+        _draw_logo(self, A4[0] - 45 - logo_w, A4[1] - 30 - logo_h, logo_w, logo_h)
 
         self.setFont("Helvetica", 8)
         self.setStrokeColor(colors.HexColor("#cbd5e1"))
@@ -90,19 +148,7 @@ class GACanvas(canvas.Canvas):
     def _draw_footer(self, page_count):
         self.saveState()
         page_size = landscape(A4)
-        logo_path = "Kirloskar Oil Engine Logo.png"
-        try:
-            self.drawImage(
-                logo_path,
-                page_size[0] - 40 - 90,
-                page_size[1] - 25 - 32,
-                width=90,
-                height=32,
-                preserveAspectRatio=True,
-                mask="auto",
-            )
-        except Exception:
-            pass
+        _draw_logo(self, page_size[0] - 40 - 90, page_size[1] - 25 - 32, 90, 32)
 
         self.setFont("Helvetica", 8)
         self.setStrokeColor(colors.HexColor("#cbd5e1"))

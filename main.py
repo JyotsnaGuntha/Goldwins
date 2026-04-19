@@ -5,6 +5,7 @@ Desktop entry point for the pywebview application.
 from __future__ import annotations
 
 import ctypes
+import os
 import sys
 from pathlib import Path
 
@@ -29,6 +30,8 @@ def _get_window_bounds() -> tuple[int, int, int, int]:
 
 
 def main():
+    os.environ.setdefault("QT_API", "pyside6")
+
     import webview
 
     bridge = MicrogridBridge()

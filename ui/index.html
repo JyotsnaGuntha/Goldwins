@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Microgrid Panel Designer</title>
+  <title>Microgrid Panel Generator</title>
   <link rel="stylesheet" href="style.css" />
   <script defer src="app.js"></script>
 </head>
@@ -11,8 +11,8 @@
   <div class="app-shell">
     <header class="topbar">
       <div>
-        <h1>Microgrid Panel Designer</h1>
-        <p class="subtitle">Single-screen SLD, GA, and BOM control center.</p>
+        <h1>Microgrid Panel Generator</h1>
+        <p class="subtitle">Design, visualize, and generate complete electrical panels in one place.</p>
       </div>
       <div class="topbar-actions">
         <img class="kirloskar-logo" src="../Kirloskar Oil Engine Logo.png" alt="Kirloskar logo" />
@@ -22,8 +22,10 @@
     <main class="workspace">
       <section class="panel controls-panel">
         <div class="panel-header">
-          <h2>Design Inputs</h2>
-          <p>Set capacities and hardware selections.</p>
+          <div class="header-content">
+            <h2>Design Inputs</h2>
+            <p>Set capacities and hardware selections.</p>
+          </div>
         </div>
 
         <div class="control-stack">
@@ -88,8 +90,8 @@
       <section class="panel output-panel">
         <div class="panel-header">
           <div class="header-content">
-            <h2>Generated Output</h2>
-            <p>Live previews and compact engineering summaries.</p>
+            <h2>Panel Design Preview</h2>
+            <p>Live previews of your panel design.</p>
           </div>
           <div class="header-actions">
             <button class="icon-button" id="downloadPdfButton" type="button">
