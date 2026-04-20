@@ -287,7 +287,7 @@ function renderFromDesign(design) {
   const warning = design.summary.warning_flag;
   if (warning) {
     setStatus(
-      `Total busbar current ${design.summary.total_busbar_current.toFixed(2)} A exceeds outgoing capacity ${design.summary.total_outgoing_rating.toFixed(0)} A.`,
+      `Incoming current ${design.summary.total_busbar_current.toFixed(2)} A is less than outgoing capacity ${design.summary.total_outgoing_rating.toFixed(0)} A.`,
       "warn",
     );
   } else {
@@ -318,6 +318,10 @@ async function generateDesign() {
     renderFromDesign(design);
     state.hasPendingChanges = false;
   } catch (error) {
+    state.lastDesign = null;
+    setPreviewPlaceholders();
+    $("summaryGrid").innerHTML = "";
+    window.alert(error.message);
     setStatus(error.message, "warn");
   } finally {
     setLoading(false);

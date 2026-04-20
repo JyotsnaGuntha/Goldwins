@@ -322,7 +322,12 @@ class MicrogridBridge:
 
         total_busbar_current = system_calcs.total_busbar_current
         total_outgoing_rating = sum(mccb_outputs)
-        warning_flag = total_busbar_current > total_outgoing_rating
+        if total_busbar_current < total_outgoing_rating:
+            raise ValueError(
+                "Generation blocked: Incoming current is less than outgoing capacity. "
+                "Increase incoming source or reduce outgoing ratings."
+            )
+        warning_flag = False
         busbar_spec = generate_busbar_spec(total_busbar_current, busbar_material)
 
         active_db = self._active_db()
