@@ -367,8 +367,14 @@ input[type="number"] {
 
 .stacked-inputs .row {
   display: grid;
-  grid-template-columns: 1fr 132px;
+  grid-template-columns: minmax(0, 1fr) 132px;
   gap: 8px;
+  align-items: center;
+}
+
+.stacked-inputs .row > span {
+  align-self: center;
+  line-height: 1.2;
 }
 
 .summary-grid {
