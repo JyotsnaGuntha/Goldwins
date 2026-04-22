@@ -1235,17 +1235,17 @@ if st.session_state.submitted:
 
         bom_items = []
         if solar_kw > 0:
-            bom_items.append({"desc": f"Solar Incomer MCCB {mccb_solar}A, {num_poles}P, 36kA BREAKING CAPACITY", "rating": "36kA", "qty": "1", "uom": "Nos"})
+            bom_items.append({"desc": f"MCCB {mccb_solar}A, {num_poles}P, 36kA", "rating": "36kA", "qty": "1", "uom": "Nos"})
         if grid_kw > 0:
-            bom_items.append({"desc": f"Grid Incomer MCCB {mccb_grid}A, {num_poles}P, 36kA BREAKING CAPACITY", "rating": "36kA", "qty": "1", "uom": "Nos"})
+            bom_items.append({"desc": f"MCCB {mccb_grid}A, {num_poles}P, 36kA", "rating": "36kA", "qty": "1", "uom": "Nos"})
         if num_dg > 0:
             from collections import Counter
             for r, count in Counter(dg_mccbs).items():
-                bom_items.append({"desc": f"DG Incomer MCCB {r}A, {num_poles}P, 36kA BREAKING CAPACITY", "rating": "36kA", "qty": str(count), "uom": "Nos"})
+                bom_items.append({"desc": f"MCCB {r}A, {num_poles}P, 36kA", "rating": "36kA", "qty": str(count), "uom": "Nos"})
         if num_outputs > 0:
             from collections import Counter
             for r, count in Counter(mccb_outputs).items():
-                bom_items.append({"desc": f"Outgoing Feeder MCCB {int(r)}A, {num_poles}P, 36kA BREAKING CAPACITY", "rating": "36kA", "qty": str(count), "uom": "Nos"})
+                bom_items.append({"desc": f"MCCB {int(r)}A, {num_poles}P, 36kA", "rating": "36kA", "qty": str(count), "uom": "Nos"})
 
         # Extract dimensions from busbar_spec for a cleaner table
         busbar_details = busbar_spec.split('(')[1].replace(')', '') if '(' in busbar_spec else busbar_spec
@@ -1385,17 +1385,17 @@ if st.session_state.submitted:
     def generate_excel_bom():
         bom_items = []
         if solar_kw > 0:
-            bom_items.append({"Description": f"Solar Incomer MCCB {mccb_solar}A, {num_poles}P, 36kA BREAKING CAPACITY", "Rating": "36kA", "Qty": 1, "UOM": "Nos"})
+            bom_items.append({"Description": f"{mccb_solar}A, {num_poles}P, 36kA", "Rating": "36kA", "Qty": 1, "UOM": "Nos"})
         if grid_kw > 0:
-            bom_items.append({"Description": f"Grid Incomer MCCB {mccb_grid}A, {num_poles}P, 36kA BREAKING CAPACITY", "Rating": "36kA", "Qty": 1, "UOM": "Nos"})
+            bom_items.append({"Description": f"{mccb_grid}A, {num_poles}P, 36kA", "Rating": "36kA", "Qty": 1, "UOM": "Nos"})
         if num_dg > 0:
             from collections import Counter
             for r, count in Counter(dg_mccbs).items():
-                bom_items.append({"Description": f"DG Incomer MCCB {r}A, {num_poles}P, 36kA BREAKING CAPACITY", "Rating": "36kA", "Qty": count, "UOM": "Nos"})
+                bom_items.append({"Description": f"DG Incomer MCCB {r}A, {num_poles}P, 36kA", "Rating": "36kA", "Qty": count, "UOM": "Nos"})
         if num_outputs > 0:
             from collections import Counter
             for r, count in Counter(mccb_outputs).items():
-                bom_items.append({"Description": f"Outgoing Feeder MCCB {int(r)}A, {num_poles}P, 36kA BREAKING CAPACITY", "Rating": "36kA", "Qty": count, "UOM": "Nos"})
+                bom_items.append({"Description": f"Outgoing Feeder MCCB {int(r)}A, {num_poles}P, 36kA", "Rating": "36kA", "Qty": count, "UOM": "Nos"})
         busbar_details = busbar_spec.split('(')[1].replace(')', '') if '(' in busbar_spec else busbar_spec
         bom_items.append({"Description": f"{busbar_material} Main Busbar ({busbar_details})", "Rating": f"{total_busbar_current:.1f}A", "Qty": 1, "UOM": "Set"})
         bom_items.append({"Description": "Microgrid Controller (MGC)", "Rating": "Standard", "Qty": 1, "UOM": "Nos"})
