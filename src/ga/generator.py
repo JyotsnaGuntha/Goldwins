@@ -160,6 +160,7 @@ def generate_ga_svg(
     BASE_PLINTH = "#08121f" if is_dark_theme else "#e5e7eb"
     PANEL_GUIDE = "#2563eb" if is_dark_theme else "#94a3b8"
     PLATE_STROKE = "#3b82f6" if is_dark_theme else "#94a3b8"
+    MAIN_DOOR_STROKE = "#f59e0b" if is_dark_theme else "#334155"
     HMI_BG = "#0a1a2e" if is_dark_theme else "#f8fafc"
     HMI_TXT = "#60a5fa" if is_dark_theme else "#334155"
     SPEC_HEADER_BG = "#0d3a4a" if is_dark_theme else "#e6f4f3"
@@ -307,6 +308,11 @@ def generate_ga_svg(
                      insert=(hmi_x + hmi_w / 2, hmi_y + hmi_h / 2 + 6),
                      font_size=13, fill=HMI_TXT, text_anchor="middle",
                      font_family="Arial", font_weight="bold"))
+
+    # Main front door split (drawn on top so it remains clearly visible).
+    panel_split_x = FRONT_X + (pF_W / 2)
+    dwg.add(dwg.line((panel_split_x, TOP_Y + bz), (panel_split_x, TOP_Y + pF_H - bz),
+                     stroke=MAIN_DOOR_STROKE, stroke_width=2.2))
 
     # Labels
     dwg.add(dwg.text("FRONT ELEVATION",
