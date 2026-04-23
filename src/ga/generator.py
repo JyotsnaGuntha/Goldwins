@@ -233,20 +233,6 @@ def generate_ga_svg(
                          font_family="Arial", font_style="italic"))
 
     # ────────────────────────────────────────────────────────────────────────
-    # 6. Grid columns
-    # ────────────────────────────────────────────────────────────────────────
-    n_cols = max(len(incomer_mccbs), len(outgoing_mccbs), 4)
-    col_px = pF_W / n_cols
-    for i in range(n_cols + 1):
-        gx = FRONT_X + i * col_px
-        dwg.add(dwg.line((gx, TOP_Y - 28), (gx, TOP_Y + pF_H + pF_PL + 8),
-                         stroke=GRID_C, stroke_width=0.4, stroke_dasharray="3,5"))
-    for i in range(n_cols):
-        gx = FRONT_X + (i + 0.5) * col_px
-        dwg.add(dwg.text(str(i), insert=(gx, TOP_Y - 32),
-                         font_size=9, fill=SUB_C, text_anchor="middle", font_family="Arial"))
-
-    # ────────────────────────────────────────────────────────────────────────
     # 7. FRONT ELEVATION — outer shell + plinth
     # ────────────────────────────────────────────────────────────────────────
     plinth_y = TOP_Y + pF_H
@@ -309,10 +295,18 @@ def generate_ga_svg(
                      font_size=13, fill=HMI_TXT, text_anchor="middle",
                      font_family="Arial", font_weight="bold"))
 
-    # Main front door split (drawn on top so it remains clearly visible).
+    # Main front door split (double seam) + right-door knob.
     panel_split_x = FRONT_X + (pF_W / 2)
-    dwg.add(dwg.line((panel_split_x, TOP_Y + bz), (panel_split_x, TOP_Y + pF_H - bz),
-                     stroke=MAIN_DOOR_STROKE, stroke_width=2.2))
+    seam_gap = 2.8
+    dwg.add(dwg.line((panel_split_x - seam_gap, TOP_Y + bz), (panel_split_x - seam_gap, TOP_Y + pF_H - bz),
+                     stroke=MAIN_DOOR_STROKE, stroke_width=1.8))
+    dwg.add(dwg.line((panel_split_x + seam_gap, TOP_Y + bz), (panel_split_x + seam_gap, TOP_Y + pF_H - bz),
+                     stroke=MAIN_DOOR_STROKE, stroke_width=1.8))
+
+    knob_x = panel_split_x + 14
+    knob_y = TOP_Y + (pF_H / 2)
+    dwg.add(dwg.circle(center=(knob_x, knob_y), r=4.0,
+                       fill=MAIN_DOOR_STROKE, stroke="none"))
 
     # Labels
     dwg.add(dwg.text("FRONT ELEVATION",
