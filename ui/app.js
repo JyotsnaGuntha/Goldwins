@@ -219,6 +219,9 @@ function collectInputs() {
     throw new Error("Please select system phases / poles.");
   }
 
+  const solarKwNum = Number(solarKwRaw);
+  const gridKwNum = Number(gridKwRaw);
+
   const numDg = Math.max(0, Math.floor(Number(numDgRaw)));
   const numOutputs = Math.max(0, Math.floor(Number(numOutputsRaw)));
   if (numOutputs < 1) {
@@ -234,8 +237,8 @@ function collectInputs() {
 
   return {
     theme: state.theme,
-    solar_kw: Number(solarKwRaw),
-    grid_kw: Number(gridKwRaw),
+    solar_kw: solarKwNum,
+    grid_kw: gridKwNum,
     num_dg: numDg,
     dg_ratings: dgInputs,
     num_outputs: numOutputs,
