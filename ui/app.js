@@ -86,6 +86,28 @@ function setPreviewPlaceholders() {
   $("gaImage").src = svgToDataUri(placeholderSvg("GA Preview", "Layout will appear after generation", state.theme));
 }
 
+function getThemeIconSVG(theme) {
+  // Use Lucide-style outline SVGs (no fill, stroke=currentColor)
+  const common = 'width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
+  if (theme === 'dark') {
+    // Show Sun when Dark mode is active
+    return `
+      <svg ${common} aria-hidden="true"><circle cx="12" cy="12" r="4"></circle>
+        <line x1="12" y1="2" x2="12" y2="4"></line>
+        <line x1="12" y1="20" x2="12" y2="22"></line>
+        <line x1="4.93" y1="4.93" x2="6.34" y2="6.34"></line>
+        <line x1="17.66" y1="17.66" x2="19.07" y2="19.07"></line>
+        <line x1="2" y1="12" x2="4" y2="12"></line>
+        <line x1="20" y1="12" x2="22" y2="12"></line>
+        <line x1="4.93" y1="19.07" x2="6.34" y2="17.66"></line>
+        <line x1="17.66" y1="6.34" x2="19.07" y2="4.93"></line>
+      </svg>`;
+  }
+  // Show Moon when Light mode is active
+  return `
+    <svg ${common} aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
+}
+
 function numberValue(id, fallback = 0) {
   const value = Number($(id).value);
   return Number.isFinite(value) ? value : fallback;
@@ -464,7 +486,7 @@ async function loadInitialState() {
   $("numPoles").value = state.num_poles ? String(state.num_poles) : "";
 
   document.body.dataset.theme = state.theme;
-  $("themeToggle").textContent = state.theme === "dark" ? "☀️" : "🌙";
+  $("themeToggle").innerHTML = getThemeIconSVG(state.theme);
   $("themeToggle").setAttribute("aria-label", state.theme === "dark" ? "Switch to light theme" : "Switch to dark theme");
   $("themeToggle").setAttribute("title", state.theme === "dark" ? "Switch to light theme" : "Switch to dark theme");
 
@@ -476,7 +498,7 @@ function bindEvents() {
   $("themeToggle").addEventListener("click", async () => {
     state.theme = state.theme === "dark" ? "light" : "dark";
     document.body.dataset.theme = state.theme;
-    $("themeToggle").textContent = state.theme === "dark" ? "☀️" : "🌙";
+    $("themeToggle").innerHTML = getThemeIconSVG(state.theme);
     $("themeToggle").setAttribute("aria-label", state.theme === "dark" ? "Switch to light theme" : "Switch to dark theme");
     $("themeToggle").setAttribute("title", state.theme === "dark" ? "Switch to light theme" : "Switch to dark theme");
     const api = await waitForApi();
