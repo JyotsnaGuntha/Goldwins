@@ -562,7 +562,7 @@ async function generateDesign() {
 
 async function analyzeBillUploads() {
   if (!state.uploadedBills.length) {
-    window.alert("Add at least one PDF bill before analyzing.");
+    window.alert("Add at least one PDF bill to analyze.");
     return;
   }
 

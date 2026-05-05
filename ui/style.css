@@ -225,9 +225,14 @@ h1 {
   margin-bottom: 8px;
 }
 
+.upload-card-copy {
+  grid-column: 1 / -1;
+}
+
 .upload-card-copy h3 {
   margin: 0;
   font-size: 1rem;
+  white-space: nowrap;
 }
 
 .upload-card-copy p {
@@ -235,11 +240,25 @@ h1 {
 }
 
 .upload-card-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(0, auto);
+  gap: 12px;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
+}
+
+.upload-card-actions .primary-button,
+.upload-card-actions .chip {
+  white-space: nowrap;
+}
+
+.upload-card-actions .primary-button {
+  justify-self: start;
+}
+
+.upload-card-actions .chip {
+  justify-self: end;
 }
 
 .hidden {
