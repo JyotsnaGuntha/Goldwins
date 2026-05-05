@@ -35,6 +35,9 @@ let fullscreenDragBasePanY = 0;
 const elements = {};
 
 const MAX_BILL_UPLOADS = 20;
+let activeAnalysisId = 0;
+let analysisProgressTimer = null;
+let analysisProgressValue = 0;
 
 function $(id) {
   return document.getElementById(id);
@@ -144,6 +147,47 @@ function formatFileSize(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function getPreviewIconSvg() {
+  return `
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <polyline points="15 3 21 3 21 9"></polyline>
+      <polyline points="9 21 3 21 3 15"></polyline>
+      <line x1="21" y1="3" x2="14" y2="10"></line>
+      <line x1="3" y1="21" x2="10" y2="14"></line>
+    </svg>
+  `;
+}
+
+function getCloseIconSvg() {
+  return `
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <line x1="18" y1="6" x2="6" y2="18"></line>
+      <line x1="6" y1="6" x2="18" y2="18"></line>
+    </svg>
+  `;
+}
+
+function getLoadingOverlayElements() {
+  return {
+    overlay: $("loadingOverlay"),
+    ring: $("loadingOverlayRing"),
+    percent: $("loadingOverlayPercent"),
+    text: $("loadingOverlayText"),
+  };
+}
+
+function getBillPreviewSource(file) {
+  const content = String(file?.content || "").trim();
+  if (!content) {
+    return "";
+  }
+  if (content.startsWith("data:") || content.startsWith("blob:")) {
+    return content;
+  }
+  const mimeType = file?.type || "application/pdf";
+  return `data:${mimeType};base64,${content}`;
+}
+
 function setSolarInputMode(mode, recommendation = null) {
   state.solarInputMode = mode;
   if (recommendation !== null && recommendation !== undefined) {
@@ -157,7 +201,7 @@ function setSolarInputMode(mode, recommendation = null) {
   if (mode === "recommended" && recommendedValue !== null) {
     if (solarInput) solarInput.value = formatInputValue(recommendedValue);
     if (recommendedInline) {
-      recommendedInline.textContent = `Recommended: ${recommendedValue} kW`;
+      recommendedInline.textContent = `Suggested: ${recommendedValue} kW`;
       recommendedInline.classList.remove("hidden");
     }
     return;
@@ -165,12 +209,53 @@ function setSolarInputMode(mode, recommendation = null) {
 
   if (recommendedInline) {
     if (recommendedValue !== null) {
-      recommendedInline.textContent = `Recommended: ${recommendedValue} kW`;
+      recommendedInline.textContent = `Suggested: ${recommendedValue} kW`;
       recommendedInline.classList.remove("hidden");
     } else {
       recommendedInline.classList.add("hidden");
     }
   }
+}
+
+function setAnalysisProgress(value, text) {
+  const progress = Math.max(0, Math.min(100, Math.round(value)));
+  const { ring, percent, text: statusText } = getLoadingOverlayElements();
+  if (ring) ring.style.setProperty("--progress", String(progress));
+  if (percent) percent.textContent = `${progress}%`;
+  if (statusText && text) statusText.textContent = text;
+}
+
+function startAnalysisProgress() {
+  analysisProgressValue = 3;
+  setLoading(true);
+  setAnalysisProgress(analysisProgressValue, "Analyzing uploaded bills...");
+  if (analysisProgressTimer) {
+    clearInterval(analysisProgressTimer);
+  }
+
+  analysisProgressTimer = setInterval(() => {
+    if (analysisProgressValue >= 92) {
+      return;
+    }
+    analysisProgressValue += Math.max(1, Math.round((92 - analysisProgressValue) / 9));
+    setAnalysisProgress(analysisProgressValue, "Analyzing uploaded bills...");
+  }, 180);
+}
+
+function finishAnalysisProgress(success = true) {
+  if (analysisProgressTimer) {
+    clearInterval(analysisProgressTimer);
+    analysisProgressTimer = null;
+  }
+
+  if (success) {
+    setAnalysisProgress(100, "Analysis complete");
+    setTimeout(() => setLoading(false), 250);
+    return;
+  }
+
+  setAnalysisProgress(0, "Analysis failed");
+  setLoading(false);
 }
 
 function renderBillFileList() {
@@ -183,11 +268,19 @@ function renderBillFileList() {
   list.innerHTML = state.uploadedBills
     .map((file, index) => `
       <div class="upload-file-item">
-        <div class="upload-file-meta">
+        <div class="upload-file-name-row">
+          <div class="upload-file-preview-text">PDF file</div>
           <div class="upload-file-name">${file.name}</div>
           <div class="upload-file-size">${formatFileSize(file.size)}</div>
         </div>
-        <button class="ghost-button upload-file-remove" type="button" data-remove-bill-index="${index}">Remove</button>
+        <div class="upload-file-actions">
+          <button class="plain-icon-button upload-file-preview" type="button" data-preview-bill-index="${index}" aria-label="Preview ${file.name}" title="Preview ${file.name}">
+            ${getPreviewIconSvg()}
+          </button>
+          <button class="plain-icon-button upload-file-remove" type="button" data-remove-bill-index="${index}" aria-label="Remove ${file.name}" title="Remove ${file.name}">
+            ${getCloseIconSvg()}
+          </button>
+        </div>
       </div>
     `)
     .join("");
@@ -204,6 +297,24 @@ function openUploadModal() {
 function closeUploadModal() {
   $("uploadModal").classList.add("hidden");
   $("uploadDropzone").classList.remove("is-dragover");
+}
+
+function openFilePreview(index) {
+  const file = state.uploadedBills[index];
+  const source = getBillPreviewSource(file);
+  if (!source) {
+    window.alert("Preview is unavailable for this file.");
+    return;
+  }
+
+  $("filePreviewTitle").textContent = file.name;
+  $("filePreviewFrame").src = source;
+  $("filePreviewOverlay").classList.remove("hidden");
+}
+
+function closeFilePreview() {
+  $("filePreviewFrame").src = "about:blank";
+  $("filePreviewOverlay").classList.add("hidden");
 }
 
 async function fileToUploadPayload(file) {
@@ -405,6 +516,17 @@ function collectInputs() {
 
 function setLoading(isLoading) {
   document.body.classList.toggle("loading", isLoading);
+  const { overlay, ring, percent, text } = getLoadingOverlayElements();
+  if (!overlay) {
+    return;
+  }
+
+  overlay.classList.toggle("hidden", !isLoading);
+  if (isLoading) {
+    if (ring) ring.style.setProperty("--progress", String(analysisProgressTimer ? analysisProgressValue : 0));
+    if (percent && !analysisProgressTimer) percent.textContent = `${analysisProgressValue || 0}%`;
+    if (text && !analysisProgressTimer) text.textContent = "Processing...";
+  }
 }
 
 function setFullscreenZoom(nextZoom) {
@@ -555,24 +677,39 @@ async function analyzeBillUploads() {
     return;
   }
 
+  const analysisId = ++activeAnalysisId;
+  const filesSnapshot = state.uploadedBills.map((file) => ({ ...file }));
+  $("uploadAnalysisResult").classList.add("hidden");
+  $("analyzeBillsButton").disabled = true;
+  startAnalysisProgress();
+
   const api = await waitForApi();
-  setLoading(true);
   try {
-    const files = await filesToPayload(state.uploadedBills);
+    const files = await filesToPayload(filesSnapshot);
     const response = await api.analyze_bills({ files });
+    if (analysisId !== activeAnalysisId) {
+      return;
+    }
     if (!response || response.ok === false) {
       throw new Error(response?.error || "Bill analysis failed");
     }
 
-      $("recommendedSolarLabel").textContent = `Recommended Solar Capacity: ${response.recommended_kw} kW`;
-      $("uploadAnalysisResult").classList.remove("hidden");
-      $("analyzeBillsButton").disabled = true;
-      state.solarRecommendation = response.recommended_kw;
-      setSolarInputMode("recommended", state.solarRecommendation);
+    $("recommendedSolarLabel").textContent = `Suggested Solar Capacity: ${response.recommended_kw} kW`;
+    $("uploadAnalysisResult").classList.remove("hidden");
+    $("uploadAnalysisResult").scrollIntoView({ behavior: "smooth", block: "nearest" });
+    state.solarRecommendation = response.recommended_kw;
+    setSolarInputMode("recommended", state.solarRecommendation);
+    finishAnalysisProgress(true);
   } catch (error) {
+    if (analysisId !== activeAnalysisId) {
+      return;
+    }
+    finishAnalysisProgress(false);
     window.alert(error.message);
   } finally {
-    setLoading(false);
+    if (analysisId === activeAnalysisId) {
+      $("analyzeBillsButton").disabled = false;
+    }
   }
 }
 
@@ -705,7 +842,16 @@ function bindEvents() {
     if (solarInput) solarInput.focus();
   });
   $("billFilesList").addEventListener("click", (event) => {
-    const removeIndex = event.target.getAttribute("data-remove-bill-index");
+    const actionButton = event.target.closest("button[data-remove-bill-index], button[data-preview-bill-index]");
+    if (!actionButton) {
+      return;
+    }
+    const removeIndex = actionButton.getAttribute("data-remove-bill-index");
+    const previewIndex = actionButton.getAttribute("data-preview-bill-index");
+    if (previewIndex !== null && previewIndex !== undefined) {
+      openFilePreview(Number(previewIndex));
+      return;
+    }
     if (removeIndex === null || removeIndex === undefined) {
       return;
     }
@@ -749,6 +895,8 @@ function bindEvents() {
       closeFullscreen();
     }
   });
+
+  $("filePreviewClose").addEventListener("click", closeFilePreview);
 
   $("fullscreenOverlay").addEventListener(
     "wheel",
@@ -812,6 +960,7 @@ function bindEvents() {
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
       closeFullscreen();
+      closeFilePreview();
       closeUploadModal();
     }
   });

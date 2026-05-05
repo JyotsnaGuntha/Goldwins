@@ -230,6 +230,14 @@ h1 {
   gap: 8px;
 }
 
+.field-helper {
+  display: block;
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 0.90rem;
+  line-height: 1.5;
+}
+
 .solar-upload-button {
   width: 34px;
   height: 34px;
@@ -238,8 +246,39 @@ h1 {
   align-items: center;
   justify-content: center;
   color: var(--text);
+}
+
+.plain-icon-button {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  border-radius: 999px;
+}
+
+.plain-icon-button:hover {
   background: rgba(148, 163, 184, 0.12);
-  border: 1px solid var(--border);
+  transform: translateY(-1px);
+}
+
+.plain-icon-button:active {
+  transform: translateY(0);
+}
+
+.plain-icon-button:focus-visible {
+  outline: 2px solid rgba(86, 213, 210, 0.9);
+  outline-offset: 2px;
+}
+
+.plain-icon-button svg {
+  stroke: currentColor;
+  flex-shrink: 0;
 }
 
 #recommendedInline {
@@ -317,16 +356,17 @@ h1 {
 
 .upload-file-list {
   display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .upload-file-item {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  align-items: center;
-  padding: 10px 12px;
+  display: grid;
+  grid-template-rows: auto auto;
+  gap: 6px;
+  min-height: 92px;
+  padding: 8px 9px;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background: rgba(148, 163, 184, 0.08);
@@ -344,12 +384,80 @@ h1 {
 
 .upload-file-size {
   margin-top: 2px;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   color: var(--muted);
 }
 
-.upload-file-remove {
-  flex-shrink: 0;
+.upload-file-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+}
+
+.upload-file-name-row {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.upload-file-actions .plain-icon-button {
+  width: 26px;
+  height: 26px;
+}
+
+.upload-file-actions svg {
+  stroke: currentColor;
+}
+
+.upload-file-preview-text {
+  font-size: 0.62rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.analysis-progress {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0 4px;
+}
+
+.analysis-progress-ring {
+  --progress: 0;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: conic-gradient(var(--accent-2) calc(var(--progress) * 1%), rgba(148, 163, 184, 0.22) 0);
+  display: grid;
+  place-items: center;
+  position: relative;
+}
+
+.analysis-progress-ring::before {
+  content: "";
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  position: absolute;
+}
+
+.analysis-progress-percent {
+  position: relative;
+  z-index: 1;
+  font-size: 0.62rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.analysis-progress-text {
+  font-size: 0.74rem;
+  color: var(--muted);
 }
 
 .upload-modal-actions {
@@ -405,7 +513,7 @@ h1 {
   border-radius: 999px;
   background: rgba(31, 169, 161, 0.15);
   color: var(--accent-2);
-  font-size: 0.72rem;
+  font-size: 0.64rem;
   font-weight: 700;
 }
 
@@ -653,8 +761,8 @@ input[type="number"] {
 }
 
 .fullscreen-overlay img {
-  max-width: 96vw;
-  max-height: 92vh;
+  max-width: 84vw;
+  max-height: 80vh;
   object-fit: contain;
   border-radius: 10px;
   transform-origin: center center;
@@ -686,6 +794,109 @@ input[type="number"] {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+.file-preview-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3200;
+  background: rgba(5, 10, 18, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: grid;
+  place-items: center;
+  padding: 18px;
+}
+
+.file-preview-overlay.hidden {
+  display: none;
+}
+
+.file-preview-shell {
+  position: relative;
+  width: min(860px, calc(100vw - 32px));
+  height: min(76vh, 700px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.file-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px 8px;
+}
+
+.file-preview-title {
+  font-size: 0.98rem;
+  font-weight: 800;
+}
+
+.file-preview-subtitle {
+  color: var(--muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.file-preview-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1;
+  color: var(--text);
+}
+
+#filePreviewFrame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #ffffff;
+}
+
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 4100;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(5, 10, 18, 0.42);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.loading-overlay.hidden {
+  display: none;
+}
+
+.loading-overlay-card {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  min-width: 180px;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: rgba(14, 24, 40, 0.9);
+  box-shadow: var(--shadow);
+}
+
+body[data-theme="light"] .loading-overlay-card {
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.loading-overlay-text {
+  color: var(--text);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
 }
 
 #gaImage {
@@ -767,9 +978,12 @@ button:active {
   background: rgba(13, 24, 40, 0.2);
 }
 
-.loading {
-  opacity: 0.72;
-  pointer-events: none;
+body.loading {
+  overflow: hidden;
+}
+
+body.loading .app-shell {
+  filter: blur(1.5px);
 }
 
 @media (max-width: 1280px) {
@@ -835,5 +1049,12 @@ button:active {
   .theme-emoji-button {
     width: 36px;
     min-width: 36px;
+  }
+
+  .plain-icon-button,
+  .solar-upload-button,
+  .theme-toggle-button {
+    width: 34px;
+    min-width: 34px;
   }
 }
