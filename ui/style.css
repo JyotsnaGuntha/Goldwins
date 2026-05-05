@@ -216,49 +216,36 @@ h1 {
   gap: 8px;
 }
 
-.upload-card {
+.solar-input-inline {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 12px;
+  gap: 10px;
   align-items: center;
-  background: linear-gradient(135deg, rgba(31, 169, 161, 0.1), rgba(53, 131, 188, 0.08));
-  margin-bottom: 8px;
 }
 
-.upload-card-copy {
-  grid-column: 1 / -1;
-}
-
-.upload-card-copy h3 {
-  margin: 0;
-  font-size: 1rem;
-  white-space: nowrap;
-}
-
-.upload-card-copy p {
-  margin: 4px 0 0;
-}
-
-.upload-card-actions {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: minmax(0, auto) minmax(0, auto);
-  gap: 12px;
+.field-label-row {
+  display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
 }
 
-.upload-card-actions .primary-button,
-.upload-card-actions .chip {
+.solar-upload-button {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  background: rgba(148, 163, 184, 0.12);
+  border: 1px solid var(--border);
+}
+
+#recommendedInline {
+  margin-top: 0;
+  width: auto;
   white-space: nowrap;
-}
-
-.upload-card-actions .primary-button {
-  justify-self: start;
-}
-
-.upload-card-actions .chip {
-  justify-self: end;
 }
 
 .hidden {

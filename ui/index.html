@@ -30,22 +30,35 @@
         </div>
 
         <div class="control-stack">
-          <section class="card upload-card" id="solarUploadSection">
-            <div class="upload-card-copy">
-              <h3>Upload energy bills to get solar capacity</h3>
-            </div>
-            <div class="upload-card-actions">
-              <button class="primary-button" id="uploadBillsButton" type="button">Upload electricity bills</button>
-              <span class="chip subtle hidden" id="recommendedInline" aria-live="polite">Recommended: -- kW</span>
-            </div>
-          </section>
-
           <div class="control-layout">
             <article class="card form-card control-main">
               <div class="grid one-col">
-                <label id="solarKwField" class="hidden">
-                  <span>Solar (kWp)</span>
-                  <input id="solarKw" type="number" min="0" step="1" placeholder="Enter solar capacity" />
+                <label id="solarKwField">
+                  <span class="field-label-row">
+                    <span>Solar (kWp)</span>
+                    <span class="chip subtle hidden" id="recommendedInline" aria-live="polite">Recommended: -- kW</span>
+                  </span>
+                  <div class="solar-input-inline">
+                    <input id="solarKw" type="number" min="0" step="1" placeholder="Enter capacity" />
+                    <button class="icon-button solar-upload-button" id="uploadBillsButton" type="button" aria-label="Upload electricity bills" title="Upload electricity bills">
+                      <svg 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        width="18" 
+                        height="18" 
+                        viewBox="0 0 24 24" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        stroke-width="2" 
+                        stroke-linecap="round" 
+                        stroke-linejoin="round" 
+                        class="lucide lucide-upload-icon lucide-upload"
+                      >
+                        <path d="M12 3v12"/>
+                        <path d="m17 8-5-5-5 5"/>
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                      </svg>
+                    </button>
+                  </div>
                 </label>
                 <label>
                   <span>Grid (kW)</span>
@@ -203,10 +216,10 @@
 
       <div class="upload-analysis-result hidden" id="uploadAnalysisResult">
         <strong id="recommendedSolarLabel">Recommended Solar Capacity: -- kW</strong>
-        <p>Would you like to proceed with this value or enter manually?</p>
+        <p id="uploadRecommendationPrompt">This recommended value has been auto-filled in Solar capacity. You can edit it manually if needed.</p>
         <div class="upload-modal-actions">
-          <button class="primary-button" id="proceedRecommendedButton" type="button">Proceed with Recommended</button>
-          <button class="ghost-button" id="enterManuallyButton" type="button">Enter Manually</button>
+          <button class="primary-button" id="proceedRecommendedButton" type="button">Continue</button>
+          <button class="ghost-button" id="enterManuallyButton" type="button">Edit Manually</button>
         </div>
       </div>
     </div>

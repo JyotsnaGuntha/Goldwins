@@ -146,41 +146,30 @@ function formatFileSize(bytes) {
 
 function setSolarInputMode(mode, recommendation = null) {
   state.solarInputMode = mode;
-  state.solarRecommendation = recommendation;
-  const solarField = $("solarKwField");
-  const solarInput = $("solarKw");
-  const recommendationChip = $("solarRecommendationChip");
-  const recommendedInline = $("recommendedInline");
-  const uploadAgainButton = $("uploadBillsAgainButton");
-  const uploadStatus = $("solarUploadStatus");
+  if (recommendation !== null && recommendation !== undefined) {
+    state.solarRecommendation = recommendation;
+  }
 
-  if (mode === "upload") {
-    if (solarField) solarField.classList.add("hidden");
-    if (recommendationChip) recommendationChip.classList.add("hidden");
-    if (recommendedInline) recommendedInline.classList.add("hidden");
-    if (uploadAgainButton) uploadAgainButton.classList.add("hidden");
-    if (uploadStatus) uploadStatus.textContent = "Upload multiple PDF bills and let the app recommend a solar value.";
+  const solarInput = $("solarKw");
+  const recommendedInline = $("recommendedInline");
+  const recommendedValue = parseOptionalNumber(state.solarRecommendation);
+
+  if (mode === "recommended" && recommendedValue !== null) {
+    if (solarInput) solarInput.value = formatInputValue(recommendedValue);
+    if (recommendedInline) {
+      recommendedInline.textContent = `Recommended: ${recommendedValue} kW`;
+      recommendedInline.classList.remove("hidden");
+    }
     return;
   }
 
-  if (solarField) solarField.classList.remove("hidden");
-  if (uploadAgainButton) uploadAgainButton.classList.remove("hidden");
-
-  if (mode === "recommended" && recommendation !== null) {
-    if (solarInput) solarInput.value = formatInputValue(Number(recommendation));
-    if (recommendationChip) recommendationChip.classList.remove("hidden");
-    if (recommendedInline) {
-      recommendedInline.textContent = `Recommended: ${Number(recommendation)} kW`;
+  if (recommendedInline) {
+    if (recommendedValue !== null) {
+      recommendedInline.textContent = `Recommended: ${recommendedValue} kW`;
       recommendedInline.classList.remove("hidden");
+    } else {
+      recommendedInline.classList.add("hidden");
     }
-    if (uploadStatus) uploadStatus.textContent = "Recommended value applied from your uploaded energy bills.";
-  } else {
-    if (mode === "manual" && solarInput) {
-      solarInput.value = "";
-    }
-    if (recommendationChip) recommendationChip.classList.add("hidden");
-    if (recommendedInline) recommendedInline.classList.add("hidden");
-    if (uploadStatus) uploadStatus.textContent = "Enter solar capacity manually or upload bills for a recommendation.";
   }
 }
 
@@ -579,11 +568,7 @@ async function analyzeBillUploads() {
       $("uploadAnalysisResult").classList.remove("hidden");
       $("analyzeBillsButton").disabled = true;
       state.solarRecommendation = response.recommended_kw;
-      const recommendedInline = $("recommendedInline");
-      if (recommendedInline) {
-        recommendedInline.textContent = `Recommended: ${response.recommended_kw} kW`;
-        recommendedInline.classList.remove("hidden");
-      }
+      setSolarInputMode("recommended", state.solarRecommendation);
   } catch (error) {
     window.alert(error.message);
   } finally {
@@ -689,8 +674,6 @@ async function loadInitialState() {
 
 function bindEvents() {
   $("uploadBillsButton").addEventListener("click", openUploadModal);
-  const uploadAgainEl = $("uploadBillsAgainButton");
-  if (uploadAgainEl) uploadAgainEl.addEventListener("click", openUploadModal);
   $("uploadModalClose").addEventListener("click", closeUploadModal);
   $("uploadModalBackdrop").addEventListener("click", closeUploadModal);
   $("cancelUploadButton").addEventListener("click", closeUploadModal);
@@ -716,7 +699,7 @@ function bindEvents() {
     closeUploadModal();
   });
   $("enterManuallyButton").addEventListener("click", () => {
-    setSolarInputMode("manual");
+    setSolarInputMode("manual", state.solarRecommendation);
     closeUploadModal();
     const solarInput = $("solarKw");
     if (solarInput) solarInput.focus();
@@ -849,7 +832,7 @@ function bindEvents() {
 
   $("solarKw").addEventListener("input", () => {
     state.solarInputMode = "manual";
-    $("solarRecommendationChip").classList.add("hidden");
+    setSolarInputMode("manual", state.solarRecommendation);
   });
 
   document.addEventListener("input", (event) => {
