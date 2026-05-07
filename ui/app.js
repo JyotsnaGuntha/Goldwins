@@ -986,6 +986,17 @@ function bindEvents() {
       state.outgoing_ratings = collectDynamicInputValues("outgoingInputs");
     }
   });
+
+  // Disable wheel scrolling on number inputs
+  document.addEventListener(
+    "wheel",
+    (event) => {
+      if (event.target.matches('input[type="number"]')) {
+        event.preventDefault();
+      }
+    },
+    { passive: false }
+  );
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
