@@ -15,7 +15,7 @@ This project addresses that problem by centralizing the design logic in one appl
 - validate user input before generation
 - derive electrical ratings from source data
 - size the panel from actual equipment footprints and clearances
-- produce SLD, GA, BOM, and report exports from the same computed design state
+- produce SLD, GA, BOM, and report exports from the same computed design state.
 
 ## Methodology
 
