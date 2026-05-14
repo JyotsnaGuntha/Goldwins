@@ -37,9 +37,9 @@ TOP_MARGIN_H = 80              # Clearance above incomers (mm)
 # ============================================================================
 CLEARANCE_PP = 25              # Phase-to-phase clearance (mm)
 CLEARANCE_PE = 20              # Phase-to-earth clearance (mm)
-MCCB_COL_GAP = 30              # Horizontal gap between MCCBs (mm)
-ROW_GAP_MM = 60                # Vertical gap between incomer and outgoing rows (mm)
-SIDE_MARGIN = 80               # Left+right margin inside mounting plate (mm)
+MCCB_COL_GAP = 150             # Horizontal gap between MCCBs (mm)
+ROW_GAP_MM = 100               # Vertical gap between incomer and outgoing rows (mm)
+SIDE_MARGIN = 150             # Left+right margin inside mounting plate (mm)
 
 # ============================================================================
 # BUSBAR CHAMBER SIZING (IEC 61439 / OEM practice)
