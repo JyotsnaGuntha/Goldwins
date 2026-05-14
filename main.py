@@ -39,7 +39,7 @@ def main():
     icon_path = resource_path("assets", "microgrid-panel-icon.ico")
     width, height, x, y = _get_window_bounds()
     webview.create_window(
-        "Microgrid Panel Designer",
+        "Microgrid Panel Generator",
         ui_path.as_uri(),
         js_api=bridge,
         width=width,
